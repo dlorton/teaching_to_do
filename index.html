@@ -124,14 +124,25 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const categories = ["Math 7", "Math 8", "Science 7", "Science 8", "Math Lab", "General Teaching"];
+            
+            // Helper function to get YYYY-MM-DD format
+            function getFormattedDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            const today = new Date();
+            const todayFormatted = getFormattedDate(today);
 
             const initialTodos = {
-                "Math 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
-                "Math 8": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
-                "Science 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
+                "Math 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
+                "Math 8": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
+                "Science 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
                 "Science 8": [
-                    { name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" },
-                    { name: "Plan the breakfast (chemical change) experiment", description: "Gather materials, write up procedure, prepare student worksheets.", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }
+                    { name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" },
+                    { name: "Plan the breakfast (chemical change) experiment", description: "Gather materials, write up procedure, prepare student worksheets.", status: "not-started", createdAt: todayFormatted, deadline: "" }
                 ], "Math Lab": [], "General Teaching": []
             };
 
@@ -143,6 +154,16 @@
 
             function saveTodos() {
                 localStorage.setItem('todos', JSON.stringify(todos));
+            }
+
+            // Robust function to display a date string
+            function formatDateForDisplay(dateString) {
+                if (!dateString || !dateString.includes('-')) {
+                    return dateString; // Return original if not in YYYY-MM-DD or empty
+                }
+                const dateParts = dateString.split('-'); // YYYY-MM-DD
+                const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                return localDate.toLocaleDateString();
             }
 
             function renderTodos() {
@@ -193,13 +214,8 @@
                             });
                         } else {
                             // Render Normal View
-                            // *** ROBUST FIX IS HERE ***
-                            let deadlineText = 'Deadline: Open-ended';
-                            if (todo.deadline) {
-                                const dateParts = todo.deadline.split('-'); // YYYY-MM-DD
-                                const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-                                deadlineText = `Deadline: ${localDate.toLocaleDateString()}`;
-                            }
+                            const deadlineText = todo.deadline ? `Deadline: ${formatDateForDisplay(todo.deadline)}` : 'Deadline: Open-ended';
+                            const createdText = `Created: ${formatDateForDisplay(todo.createdAt)}`;
 
                             itemDiv.innerHTML = `
                                 <div class="todo-view">
@@ -207,7 +223,7 @@
                                         <div class="item-name">${todo.name}</div>
                                         <div class="item-description">${todo.description || ''}</div>
                                         <div class="item-meta">
-                                            <span>Created: ${todo.createdAt}</span> | <span>${deadlineText}</span>
+                                            <span>${createdText}</span> | <span>${deadlineText}</span>
                                         </div>
                                     </div>
                                     <div class="todo-controls">
@@ -273,7 +289,7 @@
                             name: nameInput.value,
                             description: e.target.querySelector('.add-description').value,
                             status: 'not-started',
-                            createdAt: new Date().toLocaleDateString(),
+                            createdAt: getFormattedDate(new Date()),
                             deadline: e.target.querySelector('.add-deadline').value
                         });
                         
