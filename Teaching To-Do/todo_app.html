@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher's To-Do List</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .category {
+            margin-bottom: 25px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .category h2 {
+            margin-top: 0;
+            color: #1f6feb;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .todo-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            border-bottom: 1px solid #e1e4e8;
+            gap: 15px;
+        }
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+        .todo-content {
+            flex-grow: 1;
+        }
+        .todo-item .item-name {
+            font-weight: 500;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .todo-item .item-description {
+            font-size: 0.9em;
+            color: #555;
+            margin-left: 5px;
+        }
+        .todo-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+        .status-dropdown {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 0.9em;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .add-item-form input, .add-item-form button {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        .add-item-form input[type="text"] {
+            flex-grow: 1;
+        }
+        .add-item-form button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .add-item-form button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Teacher's To-Do List</h1>
+
+        <div id="todo-categories"></div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = [
+                "Math 7",
+                "Math 8",
+                "Science 7",
+                "Science 8",
+                "Math Lab",
+                "General Teaching"
+            ];
+
+            const initialTodos = {
+                "Math 7": [{ name: "Update grades", description: "" }],
+                "Math 8": [{ name: "Update grades", description: "" }],
+                "Science 7": [{ name: "Update grades", description: "" }],
+                "Science 8": [
+                    { name: "Update grades", description: "" },
+                    { name: "Plan the breakfast (chemical change) experiment for this week", description: "Gather materials, write up procedure, prepare student worksheets." }
+                ],
+                "Math Lab": [],
+                "General Teaching": []
+            };
+
+            let todos = JSON.parse(localStorage.getItem('todos')) || initialTodos;
+
+            const categoriesContainer = document.getElementById('todo-categories');
+
+            function saveTodos() {
+                localStorage.setItem('todos', JSON.stringify(todos));
+            }
+
+            function renderTodos() {
+                categoriesContainer.innerHTML = '';
+                categories.forEach(category => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category';
+
+                    const categoryTitle = document.createElement('h2');
+                    categoryTitle.textContent = category;
+                    categoryDiv.appendChild(categoryTitle);
+                    
+                    const itemsContainer = document.createElement('div');
+                    itemsContainer.id = `items-${category.replace(/\s+/g, '-')}`;
+
+                    if (todos[category] && todos[category].length > 0) {
+                        todos[category].forEach((todo, index) => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'todo-item';
+
+                            itemDiv.innerHTML = `
+                                <div class="todo-content">
+                                    <div class="item-name">${todo.name}</div>
+                                    <div class="item-description">${todo.description || ''}</div>
+                                </div>
+                                <div class="todo-controls">
+                                    <select class="status-dropdown">
+                                        <option value="not-started" ${todo.status === 'not-started' ? 'selected' : ''}>Not Started</option>
+                                        <option value="started" ${todo.status === 'started' ? 'selected' : ''}>Started</option>
+                                        <option value="finished" ${todo.status === 'finished' ? 'selected' : ''}>Finished</option>
+                                    </select>
+                                    <button class="delete-btn">Delete</button>
+                                </div>
+                            `;
+
+                            itemDiv.querySelector('.status-dropdown').addEventListener('change', (e) => {
+                                todos[category][index].status = e.target.value;
+                                saveTodos();
+                            });
+
+                            itemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+                                todos[category].splice(index, 1);
+                                saveTodos();
+                                renderTodos();
+                            });
+                            
+                            itemsContainer.appendChild(itemDiv);
+                        });
+                    }
+                    categoryDiv.appendChild(itemsContainer);
+
+                    const form = document.createElement('form');
+                    form.className = 'add-item-form';
+                    form.innerHTML = `
+                        <input type="text" placeholder="New to-do item..." required>
+                        <input type="text" placeholder="Description (optional)">
+                        <button type="submit">Add Item</button>
+                    `;
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const nameInput = form.children[0];
+                        const descriptionInput = form.children[1];
+                        if (nameInput.value.trim() === '') return;
+                        
+                        if (!todos[category]) {
+                            todos[category] = [];
+                        }
+                        todos[category].push({
+                            name: nameInput.value,
+                            description: descriptionInput.value,
+                            status: 'not-started'
+                        });
+                        
+                        nameInput.value = '';
+                        descriptionInput.value = '';
+                        saveTodos();
+                        renderTodos();
+                    });
+
+                    categoryDiv.appendChild(form);
+                    categoriesContainer.appendChild(categoryDiv);
+                });
+            }
+
+            renderTodos();
+        });
+    </script>
+
+</body>
+</html>
