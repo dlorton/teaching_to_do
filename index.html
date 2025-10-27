@@ -193,8 +193,14 @@
                             });
                         } else {
                             // Render Normal View
-                            // *** FIX IS HERE: Check if todo.deadline exists before formatting it ***
-                            const deadlineText = todo.deadline ? `Deadline: ${new Date(todo.deadline).toLocaleDateString()}` : 'Deadline: Open-ended';
+                            // *** ROBUST FIX IS HERE ***
+                            let deadlineText = 'Deadline: Open-ended';
+                            if (todo.deadline) {
+                                const dateParts = todo.deadline.split('-'); // YYYY-MM-DD
+                                const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                                deadlineText = `Deadline: ${localDate.toLocaleDateString()}`;
+                            }
+
                             itemDiv.innerHTML = `
                                 <div class="todo-view">
                                     <div class="todo-content">
