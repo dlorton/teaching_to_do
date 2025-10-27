@@ -193,6 +193,7 @@
                             });
                         } else {
                             // Render Normal View
+                            // *** FIX IS HERE: Check if todo.deadline exists before formatting it ***
                             const deadlineText = todo.deadline ? `Deadline: ${new Date(todo.deadline).toLocaleDateString()}` : 'Deadline: Open-ended';
                             itemDiv.innerHTML = `
                                 <div class="todo-view">
@@ -242,32 +243,32 @@
                         <div class="add-item-form-grid">
                             <div class="add-item-form-row">
                                 <label>Item Name</label>
-                                <input type="text" placeholder="New to-do..." required>
+                                <input type="text" class="add-name" placeholder="New to-do..." required>
                             </div>
                             <div class="add-item-form-row">
                                 <label>Description (Optional)</label>
-                                <input type="text" placeholder="Details...">
+                                <input type="text" class="add-description" placeholder="Details...">
                             </div>
-                            <div class="add-item-form-row">
-                                <label>Deadline (Optional)</label>
-                                <input type="date">
-                            </div>
+                        </div>
+                        <div class="add-item-form-row">
+                            <label>Deadline (Optional)</label>
+                            <input type="date" class="add-deadline">
                         </div>
                         <button type="submit">Add Item</button>
                     `;
                     form.addEventListener('submit', (e) => {
                         e.preventDefault();
-                        const nameInput = e.target.querySelector('input[type="text"]');
+                        const nameInput = e.target.querySelector('.add-name');
                         if (nameInput.value.trim() === '') return;
                         
                         if (!todos[category]) todos[category] = [];
                         
                         todos[category].push({
                             name: nameInput.value,
-                            description: e.target.querySelectorAll('input[type="text"]')[1].value,
+                            description: e.target.querySelector('.add-description').value,
                             status: 'not-started',
                             createdAt: new Date().toLocaleDateString(),
-                            deadline: e.target.querySelector('input[type="date"]').value
+                            deadline: e.target.querySelector('.add-deadline').value
                         });
                         
                         form.reset();
