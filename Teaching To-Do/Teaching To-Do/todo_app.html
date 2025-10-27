@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher's To-Do List</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .category {
+            margin-bottom: 25px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .category h2 {
+            margin-top: 0;
+            color: #1f6feb;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .todo-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            padding: 15px;
+            border-bottom: 1px solid #e1e4e8;
+            gap: 15px;
+        }
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+        .todo-content {
+            flex-grow: 1;
+        }
+        .item-name {
+            font-weight: 500;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .item-description {
+            font-size: 0.9em;
+            color: #555;
+            margin-left: 5px;
+            margin-bottom: 8px;
+        }
+        .item-meta {
+            font-size: 0.8em;
+            color: #6a737d;
+            margin-left: 5px;
+        }
+        .todo-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+        .status-dropdown {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 0.9em;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .add-item-form {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
+        .add-item-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+        .add-item-form input, .add-item-form button {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        .add-item-form input[type="text"], .add-item-form input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .add-item-form button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            height: 40px;
+        }
+        .add-item-form button:hover {
+            background-color: #218838;
+        }
+        .form-labels {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Teacher's To-Do List</h1>
+        <div id="todo-categories"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = [
+                "Math 7", "Math 8", "Science 7", "Science 8", "Math Lab", "General Teaching"
+            ];
+
+            const initialTodos = {
+                "Math 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
+                "Math 8": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
+                "Science 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }],
+                "Science 8": [
+                    { name: "Update grades", description: "", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" },
+                    { name: "Plan the breakfast (chemical change) experiment", description: "Gather materials, write up procedure, prepare student worksheets.", status: "not-started", createdAt: new Date().toLocaleDateString(), deadline: "" }
+                ],
+                "Math Lab": [],
+                "General Teaching": []
+            };
+
+            let todos = JSON.parse(localStorage.getItem('todos')) || initialTodos;
+
+            const categoriesContainer = document.getElementById('todo-categories');
+
+            function saveTodos() {
+                localStorage.setItem('todos', JSON.stringify(todos));
+            }
+
+            function renderTodos() {
+                categoriesContainer.innerHTML = '';
+                categories.forEach(category => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category';
+                    categoryDiv.innerHTML = `<h2>${category}</h2>`;
+                    
+                    const itemsContainer = document.createElement('div');
+                    itemsContainer.id = `items-${category.replace(/\s+/g, '-')}`;
+
+                    (todos[category] || []).forEach((todo, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'todo-item';
+
+                        const deadlineText = todo.deadline ? `Deadline: ${new Date(todo.deadline).toLocaleDateString()}` : 'Deadline: Open-ended';
+
+                        itemDiv.innerHTML = `
+                            <div class="todo-content">
+                                <div class="item-name">${todo.name}</div>
+                                <div class="item-description">${todo.description || ''}</div>
+                                <div class="item-meta">
+                                    <span>Created: ${todo.createdAt}</span> | <span>${deadlineText}</span>
+                                </div>
+                            </div>
+                            <div class="todo-controls">
+                                <select class="status-dropdown">
+                                    <option value="not-started" ${todo.status === 'not-started' ? 'selected' : ''}>Not Started</option>
+                                    <option value="started" ${todo.status === 'started' ? 'selected' : ''}>Started</option>
+                                    <option value="finished" ${todo.status === 'finished' ? 'selected' : ''}>Finished</option>
+                                </select>
+                                <button class="delete-btn">Delete</button>
+                            </div>
+                        `;
+
+                        itemDiv.querySelector('.status-dropdown').addEventListener('change', (e) => {
+                            todos[category][index].status = e.target.value;
+                            saveTodos();
+                        });
+
+                        itemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+                            todos[category].splice(index, 1);
+                            saveTodos();
+                            renderTodos();
+                        });
+                        
+                        itemsContainer.appendChild(itemDiv);
+                    });
+                    categoryDiv.appendChild(itemsContainer);
+
+                    const form = document.createElement('form');
+                    form.className = 'add-item-form';
+                    form.innerHTML = `
+                        <div class="form-labels">
+                           <span>Item Name</span>
+                           <span>Description (Optional)</span>
+                        </div>
+                        <div class="add-item-form-grid">
+                            <input type="text" placeholder="New to-do..." required>
+                            <input type="text" placeholder="Details...">
+                            <div>
+                                <label for="deadline-${category.replace(/\s+/g, '-')}" style="font-size: 0.85em; color: #555;">Deadline (Optional)</label>
+                                <input type="date" id="deadline-${category.replace(/\s+/g, '-')}">
+                            </div>
+                            <button type="submit">Add Item</button>
+                        </div>
+                    `;
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const nameInput = e.target.querySelector('input[type="text"]');
+                        const descriptionInput = e.target.querySelectorAll('input[type="text"]')[1];
+                        const deadlineInput = e.target.querySelector('input[type="date"]');
+                        
+                        if (nameInput.value.trim() === '') return;
+                        
+                        if (!todos[category]) todos[category] = [];
+                        
+                        todos[category].push({
+                            name: nameInput.value,
+                            description: descriptionInput.value,
+                            status: 'not-started',
+                            createdAt: new Date().toLocaleDateString(),
+                            deadline: deadlineInput.value
+                        });
+                        
+                        form.reset();
+                        saveTodos();
+                        renderTodos();
+                    });
+
+                    categoryDiv.appendChild(form);
+                    categoriesContainer.appendChild(categoryDiv);
+                });
+            }
+
+            renderTodos();
+        });
+    </script>
+
+</body>
+</html>
