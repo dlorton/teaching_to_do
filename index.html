@@ -2,35 +2,304 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JavaScript Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher's To-Do List</title>
     <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-        h1 { font-size: 2em; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .category {
+            margin-bottom: 25px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .category h2 {
+            margin-top: 0;
+            color: #1f6feb;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .todo-item {
+            padding: 15px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+        .todo-view {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .todo-content {
+            flex-grow: 1;
+        }
+        .item-name {
+            font-weight: 500;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .item-description {
+            font-size: 0.9em;
+            color: #555;
+            margin-left: 5px;
+            margin-bottom: 8px;
+        }
+        .item-meta {
+            font-size: 0.8em;
+            color: #6a737d;
+            margin-left: 5px;
+        }
+        .todo-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 220px;
+        }
+        .status-dropdown, .edit-btn, .delete-btn, .save-btn, .cancel-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .edit-btn { background-color: #ffc107; border-color: #ffc107; }
+        .delete-btn { background: #e74c3c; color: white; border-color: #e74c3c; }
+        .save-btn { background-color: #28a745; color: white; border-color: #28a745; }
+        .cancel-btn { background-color: #6c757d; color: white; border-color: #6c757d; }
+
+        /* Edit Form Styles */
+        .edit-form-container { display: flex; flex-direction: column; gap: 10px; }
+        .edit-form-container input, .edit-form-container textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .edit-form-container textarea { min-height: 60px; }
+        .edit-controls { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* Add Item Form Styles */
+        .add-item-form { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ccc; }
+        .add-item-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .add-item-form-row { display: flex; flex-direction: column; }
+        .add-item-form label { font-size: 0.85em; color: #555; margin-bottom: 3px; }
+        .add-item-form input { padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+        .add-item-form button {
+            background-color: #28a745; color: white; border: none; cursor: pointer;
+            padding: 10px; border-radius: 6px; margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <h1 id="test-heading">If you see this text, JavaScript did not run.</h1>
-    <p>This is a test to confirm that JavaScript is being executed by the browser.</p>
+    <div class="container">
+        <h1>Teacher's To-Do List</h1>
+        <div id="todo-categories"></div>
+    </div>
 
     <script>
-        // This script will change the text of the h1 element above.
-        // If the text changes, we know JavaScript is working correctly on your page.
-        try {
-            document.addEventListener('DOMContentLoaded', function() {
-                const heading = document.getElementById('test-heading');
-                if (heading) {
-                    heading.textContent = 'Success! JavaScript is running.';
-                    heading.style.color = 'green';
-                } else {
-                    // This part should not be reachable, but is here for debugging.
-                    alert('Error: Could not find the heading element.');
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = ["Math 7", "Math 8", "Science 7", "Science 8", "Math Lab", "General Teaching"];
+            
+            function getFormattedDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            const todayFormatted = getFormattedDate(new Date());
+
+            const initialTodos = {
+                "Math 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
+                "Math 8": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
+                "Science 7": [{ name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" }],
+                "Science 8": [
+                    { name: "Update grades", description: "", status: "not-started", createdAt: todayFormatted, deadline: "" },
+                    { name: "Plan the breakfast (chemical change) experiment", description: "Gather materials, write up procedure, prepare student worksheets.", status: "not-started", createdAt: todayFormatted, deadline: "" }
+                ], "Math Lab": [], "General Teaching": []
+            };
+
+            let todos = JSON.parse(localStorage.getItem('todos')) || initialTodos;
+            let editingIndex = null;
+            let editingCategory = null;
+
+            const categoriesContainer = document.getElementById('todo-categories');
+
+            function saveTodos() {
+                localStorage.setItem('todos', JSON.stringify(todos));
+            }
+
+            function formatDateForDisplay(dateString) {
+                if (!dateString || !dateString.includes('-')) {
+                    return dateString;
                 }
-            });
-        } catch (e) {
-            // If any error happens, show an alert.
-            alert('A critical JavaScript error occurred: ' + e.message);
-        }
+                const dateParts = dateString.split('-');
+                const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                return localDate.toLocaleDateString();
+            }
+
+            function renderTodos() {
+                categoriesContainer.innerHTML = '';
+                categories.forEach(category => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category';
+                    categoryDiv.innerHTML = `<h2>${category}</h2>`;
+                    
+                    const itemsContainer = document.createElement('div');
+                    (todos[category] || []).forEach((todo, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'todo-item';
+
+                        if (editingCategory === category && editingIndex === index) {
+                            // Render Edit View
+                            itemDiv.innerHTML = `
+                                <div class="edit-form-container">
+                                    <input type="text" class="edit-name" value="${todo.name}" placeholder="Item Name">
+                                    <textarea class="edit-description" placeholder="Description">${todo.description || ''}</textarea>
+                                    <div>
+                                        <label style="font-size:0.9em">Deadline:</label>
+                                        <input type="date" class="edit-deadline" value="${todo.deadline || ''}">
+                                    </div>
+                                    <div class="edit-controls">
+                                        <button class="save-btn">Save</button>
+                                        <button class="cancel-btn">Cancel</button>
+                                    </div>
+                                </div>
+                            `;
+                            itemDiv.querySelector('.save-btn').addEventListener('click', () => {
+                                const newName = itemDiv.querySelector('.edit-name').value;
+                                if (newName.trim() === '') return alert('Item name cannot be empty.');
+                                
+                                todos[category][index].name = newName;
+                                todos[category][index].description = itemDiv.querySelector('.edit-description').value;
+                                todos[category][index].deadline = itemDiv.querySelector('.edit-deadline').value;
+                                
+                                editingCategory = null;
+                                editingIndex = null;
+                                saveTodos();
+                                renderTodos();
+                            });
+                            itemDiv.querySelector('.cancel-btn').addEventListener('click', () => {
+                                editingCategory = null;
+                                editingIndex = null;
+                                renderTodos();
+                            });
+                        } else {
+                            // Render Normal View
+                            const deadlineText = todo.deadline ? `Deadline: ${formatDateForDisplay(todo.deadline)}` : 'Deadline: Open-ended';
+                            const createdText = `Created: ${formatDateForDisplay(todo.createdAt)}`;
+
+                            itemDiv.innerHTML = `
+                                <div class="todo-view">
+                                    <div class="todo-content">
+                                        <div class="item-name">${todo.name}</div>
+                                        <div class="item-description">${todo.description || ''}</div>
+                                        <div class="item-meta">
+                                            <span>${createdText}</span> | <span>${deadlineText}</span>
+                                        </div>
+                                    </div>
+                                    <div class="todo-controls">
+                                        <select class="status-dropdown">
+                                            <option value="not-started" ${todo.status === 'not-started' ? 'selected' : ''}>Not Started</option>
+                                            <option value="started" ${todo.status === 'started' ? 'selected' : ''}>Started</option>
+                                            <option value="finished" ${todo.status === 'finished' ? 'selected' : ''}>Finished</option>
+                                        </select>
+                                        <button class="edit-btn">Edit</button>
+                                        <button class="delete-btn">Delete</button>
+                                    </div>
+                                </div>
+                            `;
+
+                            itemDiv.querySelector('.status-dropdown').addEventListener('change', (e) => {
+                                todos[category][index].status = e.target.value;
+                                saveTodos();
+                            });
+                            itemDiv.querySelector('.edit-btn').addEventListener('click', () => {
+                                editingCategory = category;
+                                editingIndex = index;
+                                renderTodos();
+                            });
+                            itemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+                                if (confirm('Are you sure you want to delete this item?')) {
+                                    todos[category].splice(index, 1);
+                                    saveTodos();
+                                    renderTodos();
+                                }
+                            });
+                        }
+                        itemsContainer.appendChild(itemDiv);
+                    });
+                    categoryDiv.appendChild(itemsContainer);
+
+                    const form = document.createElement('form');
+                    form.className = 'add-item-form';
+                    form.innerHTML = `
+                        <div class="add-item-form-grid">
+                            <div class="add-item-form-row">
+                                <label>Item Name</label>
+                                <input type="text" class="add-name" placeholder="New to-do..." required>
+                            </div>
+                            <div class="add-item-form-row">
+                                <label>Description (Optional)</label>
+                                <input type="text" class="add-description" placeholder="Details...">
+                            </div>
+                        </div>
+                        <div class="add-item-form-row">
+                            <label>Deadline (Optional)</label>
+                            <input type="date" class="add-deadline">
+                        </div>
+                        <button type="submit">Add Item</button>
+                    `;
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const nameInput = e.target.querySelector('.add-name');
+                        if (nameInput.value.trim() === '') return;
+                        
+                        if (!todos[category]) todos[category] = [];
+                        
+                        todos[category].push({
+                            name: nameInput.value,
+                            description: e.target.querySelector('.add-description').value,
+                            status: 'not-started',
+                            createdAt: getFormattedDate(new Date()),
+                            deadline: e.target.querySelector('.add-deadline').value
+                        });
+                        
+                        form.reset();
+                        saveTodos();
+                        renderTodos();
+                    });
+                    categoryDiv.appendChild(form);
+                });
+            }
+
+            renderTodos();
+        });
     </script>
 
 </body>
