@@ -56,25 +56,40 @@
             background: #fff;
             padding: 12px;
             border-bottom: 1px solid #eee;
-            display: flex; /* NEW: Use flexbox for alignment */
-            justify-content: space-between; /* NEW: Pushes items to opposite ends */
-            align-items: center; /* NEW: Vertically aligns items in the middle */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px; /* NEW: Add some space between text and buttons */
         }
         li:first-child {
             border-top: 1px solid #eee;
         }
-        /* NEW: Style for our delete button */
-        .delete-btn {
-            background-color: #dc3545;
+        /* NEW: A container for our buttons to keep them together */
+        .button-container {
+            display: flex;
+            gap: 5px;
+        }
+        /* A class for the task text itself */
+        .task-text {
+            flex-grow: 1; /* Allows text to take up available space */
+        }
+
+        /* Generic button styling */
+        .btn {
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
         }
-        .delete-btn:hover {
-            background-color: #c82333;
-        }
+        .edit-btn { background-color: #ffc107; } /* Yellow */
+        .save-btn { background-color: #28a745; } /* Green */
+        .delete-btn { background-color: #dc3545; } /* Red */
+
+        .edit-btn:hover { background-color: #e0a800; }
+        .save-btn:hover { background-color: #218838; }
+        .delete-btn:hover { background-color: #c82333; }
+
     </style>
 </head>
 <body>
@@ -92,57 +107,89 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-
             const taskInput = document.getElementById('task-input');
             const addTaskBtn = document.getElementById('add-task-btn');
             const taskList = document.getElementById('task-list');
 
             function addTask() {
                 const taskText = taskInput.value.trim();
-                if (taskText === "") {
-                    return;
-                }
+                if (taskText === "") return;
 
-                // --- START OF CHANGES ---
-
-                // 1. Create the list item (same as before)
                 const listItem = document.createElement('li');
 
-                // 2. Create a span to hold the task text
-                //    This helps separate the text from the button
+                // --- START OF MAJOR CHANGES ---
+
+                // 1. Create a span for the text
                 const taskSpan = document.createElement('span');
                 taskSpan.textContent = taskText;
+                taskSpan.className = 'task-text';
 
-                // 3. Create the delete button
+                // 2. Create the buttons (Edit and Delete)
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'btn edit-btn';
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'delete-btn'; // Assign a class for styling
+                deleteBtn.className = 'btn delete-btn';
 
-                // 4. Add the "magic": Tell the button what to do when clicked
+                // 3. Create a container for the buttons to group them
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                buttonContainer.appendChild(editBtn);
+                buttonContainer.appendChild(deleteBtn);
+
+                // 4. Assemble the list item
+                listItem.appendChild(taskSpan);
+                listItem.appendChild(buttonContainer);
+                taskList.appendChild(listItem);
+
+                // 5. Add the "Delete" functionality (same as before)
                 deleteBtn.addEventListener('click', () => {
-                    // When this specific button is clicked, remove its parent, the `listItem`
                     listItem.remove();
                 });
 
-                // 5. Assemble the list item
-                //    Put the text span and the delete button INSIDE the list item
-                listItem.appendChild(taskSpan);
-                listItem.appendChild(deleteBtn);
+                // 6. Add the "Edit" functionality (ALL NEW LOGIC)
+                editBtn.addEventListener('click', () => {
+                    // Create an input field for editing
+                    const editInput = document.createElement('input');
+                    editInput.type = 'text';
+                    editInput.value = taskSpan.textContent;
+                    editInput.className = 'task-text'; // Use same class to maintain layout
 
-                // 6. Add the fully assembled list item to the main list on the page
-                taskList.appendChild(listItem);
+                    // Create a "Save" button
+                    const saveBtn = document.createElement('button');
+                    saveBtn.textContent = 'Save';
+                    saveBtn.className = 'btn save-btn';
+
+                    // SWAP: Replace the text span with the input field
+                    listItem.replaceChild(editInput, taskSpan);
+                    // SWAP: Replace the "Edit" button with the "Save" button
+                    buttonContainer.replaceChild(saveBtn, editBtn);
+                    
+                    // Focus the input field for the user
+                    editInput.focus();
+
+                    // Add logic for the "Save" button
+                    saveBtn.addEventListener('click', () => {
+                        const updatedText = editInput.value.trim();
+                        if (updatedText) { // Only save if there's some text
+                            taskSpan.textContent = updatedText;
+                        }
+                        // SWAP BACK: Put the text span back
+                        listItem.replaceChild(taskSpan, editInput);
+                        // SWAP BACK: Put the "Edit" button back
+                        buttonContainer.replaceChild(editBtn, saveBtn);
+                    });
+                });
                 
-                // --- END OF CHANGES ---
+                // --- END OF MAJOR CHANGES ---
 
                 taskInput.value = "";
             }
 
             addTaskBtn.addEventListener('click', addTask);
-            taskInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    addTask();
-                }
-            });
+            taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
         });
     </script>
 
