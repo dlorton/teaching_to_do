@@ -5,14 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My First To-Do List</title>
     <style>
-        /* CSS is unchanged */
-        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { text-align: center; color: #333; }
+        
+        /* NEW: Styles for login/logout and visibility control */
+        .hidden { display: none !important; }
+        #auth-container { text-align: center; }
+        #app-header { display: flex; justify-content: space-between; align-items: center; }
+        .google-login-btn, .logout-btn { padding: 10px 20px; border-radius: 5px; border: none; font-size: 16px; cursor: pointer; background-color: #4285F4; color: white; }
+        .logout-btn { background-color: #6c757d; }
+
+        /* Unchanged Styles */
         .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
         #task-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         #add-task-btn { padding: 10px 15px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; }
-        #add-task-btn:hover { background-color: #0056b3; }
         ul { list-style-type: none; padding: 0; }
         li { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         li:first-child { border-top: 1px solid #eee; }
@@ -26,125 +33,169 @@
 </head>
 <body>
     <div class="container">
-        <h1>My To-Do List</h1>
-        <div class="input-area">
-            <input type="text" id="task-input" placeholder="Add a new task...">
-            <button id="add-task-btn">Add Task</button>
+        <!-- NEW: Container for when user is logged OUT -->
+        <div id="auth-container">
+            <h1>My To-Do List</h1>
+            <p>Please sign in to continue</p>
+            <button id="login-btn" class="google-login-btn">Sign in with Google</button>
         </div>
-        <ul id="task-list"></ul>
+
+        <!-- NEW: Container for the main app, hidden by default -->
+        <div id="app-container" class="hidden">
+            <div id="app-header">
+                <h1>My To-Do List</h1>
+                <button id="logout-btn" class="logout-btn">Sign Out</button>
+            </div>
+            <div class="input-area">
+                <input type="text" id="task-input" placeholder="Add a new task...">
+                <button id="add-task-btn">Add Task</button>
+            </div>
+            <ul id="task-list"></ul>
+        </div>
     </div>
 
-    <!-- 1. Include the Firebase SDK (Software Development Kit) -->
+    <!-- ADDED firebase-auth-compat.js -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
     <script>
-        // ===================================================================
-        // VVV PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE VVV
-        // ===================================================================
+        // Paste your SAFE firebaseConfig object here
         const firebaseConfig = {
-            apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
-            authDomain: "teaching-to-do-list.firebaseapp.com",
-            projectId: "teaching-to-do-list",
-            storageBucket: "teaching-to-do-list.firebasestorage.app",
-            messagingSenderId: "436829328408",
-            appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
-            measurementId: "G-32552MXKEK"
-          };
-        // ===================================================================
-        // ^^^ END OF FIREBASE CONFIGURATION ^^^
-        // ===================================================================
+            apiKey: "YOUR_SAFE_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            // ... etc
+        };
 
-
-        // Initialize Firebase and Firestore
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth(); // NEW: Initialize Auth
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const taskInput = document.getElementById('task-input');
-            const addTaskBtn = document.getElementById('add-task-btn');
-            const taskList = document.getElementById('task-list');
+        // Get references to all our new elements
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const taskInput = document.getElementById('task-input');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskList = document.getElementById('task-list');
 
-            // Listen for REAL-TIME updates from Firestore
-            db.collection("todos").orderBy("createdAt", "asc").onSnapshot(snapshot => {
-                const todos = [];
-                snapshot.forEach(doc => {
-                    todos.push({ id: doc.id, ...doc.data() });
+        let unsubscribeFromTodos; // This will hold our real-time listener
+
+        // The CORE of our authentication logic
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // --- USER IS LOGGED IN ---
+                authContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                
+                // NEW: All Firestore logic now happens securely inside this block
+                const userTodosCollection = db.collection('users').doc(user.uid).collection('todos');
+
+                // Start listening for this user's todos
+                unsubscribeFromTodos = userTodosCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                    const todos = [];
+                    snapshot.forEach(doc => {
+                        todos.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderTodos(todos, userTodosCollection); // Pass collection reference
                 });
-                renderTodos(todos);
+
+            } else {
+                // --- USER IS LOGGED OUT ---
+                authContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                taskList.innerHTML = ''; // Clear the list
+
+                // If a listener is active, unsubscribe to prevent errors
+                if (unsubscribeFromTodos) {
+                    unsubscribeFromTodos();
+                }
+            }
+        });
+
+        // --- AUTH EVENT LISTENERS ---
+        loginBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // --- RENDER function is mostly the same, but uses the collection reference ---
+        function renderTodos(todos, collection) {
+            taskList.innerHTML = '';
+            todos.forEach(todo => {
+                const listItem = document.createElement('li');
+                // ... (code to create span, buttons is identical)
+                const taskSpan = document.createElement('span');
+                taskSpan.textContent = todo.text;
+                taskSpan.className = 'task-text';
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'btn edit-btn';
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'btn delete-btn';
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                buttonContainer.appendChild(editBtn);
+                buttonContainer.appendChild(deleteBtn);
+                listItem.appendChild(taskSpan);
+                listItem.appendChild(buttonContainer);
+                taskList.appendChild(listItem);
+
+                // Listeners now use the passed-in 'collection'
+                deleteBtn.addEventListener('click', () => {
+                    collection.doc(todo.id).delete();
+                });
+
+                editBtn.addEventListener('click', () => {
+                    // ... (edit logic is the same)
+                    const editInput = document.createElement('input');
+                    editInput.type = 'text';
+                    editInput.value = taskSpan.textContent;
+                    editInput.className = 'task-text';
+                    const saveBtn = document.createElement('button');
+                    saveBtn.textContent = 'Save';
+                    saveBtn.className = 'btn save-btn';
+                    listItem.replaceChild(editInput, taskSpan);
+                    buttonContainer.replaceChild(saveBtn, editBtn);
+                    editInput.focus();
+                    
+                    saveBtn.addEventListener('click', () => {
+                        const updatedText = editInput.value.trim();
+                        if (updatedText) {
+                            collection.doc(todo.id).update({ text: updatedText });
+                        }
+                    });
+                });
+            });
+        }
+        
+        // --- addTask now needs to know which user is logged in ---
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            const user = auth.currentUser; // Get the currently logged-in user
+            
+            if (taskText === "" || !user) return;
+
+            // Get the correct collection for this user and add the task
+            db.collection('users').doc(user.uid).collection('todos').add({
+                text: taskText,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // RENDER function takes the 'todos' array as an argument
-            function renderTodos(todos) {
-                taskList.innerHTML = '';
-                todos.forEach(todo => {
-                    const listItem = document.createElement('li');
-                    const taskSpan = document.createElement('span');
-                    taskSpan.textContent = todo.text;
-                    taskSpan.className = 'task-text';
+            taskInput.value = "";
+        }
 
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = 'Edit';
-                    editBtn.className = 'btn edit-btn';
+        addTaskBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
 
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'Delete';
-                    deleteBtn.className = 'btn delete-btn';
-
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-                    buttonContainer.appendChild(editBtn);
-                    buttonContainer.appendChild(deleteBtn);
-
-                    listItem.appendChild(taskSpan);
-                    listItem.appendChild(buttonContainer);
-                    taskList.appendChild(listItem);
-
-                    // --- Event Listeners now talk to Firestore ---
-                    deleteBtn.addEventListener('click', () => {
-                        db.collection("todos").doc(todo.id).delete();
-                    });
-
-                    editBtn.addEventListener('click', () => {
-                        const editInput = document.createElement('input');
-                        editInput.type = 'text';
-                        editInput.value = taskSpan.textContent;
-                        editInput.className = 'task-text';
-
-                        const saveBtn = document.createElement('button');
-                        saveBtn.textContent = 'Save';
-                        saveBtn.className = 'btn save-btn';
-
-                        listItem.replaceChild(editInput, taskSpan);
-                        buttonContainer.replaceChild(saveBtn, editBtn);
-                        editInput.focus();
-
-                        saveBtn.addEventListener('click', () => {
-                            const updatedText = editInput.value.trim();
-                            if (updatedText) {
-                                db.collection("todos").doc(todo.id).update({ text: updatedText });
-                            }
-                        });
-                    });
-                });
-            }
-
-            // addTask now adds a new document to Firestore
-            function addTask() {
-                const taskText = taskInput.value.trim();
-                if (taskText === "") return;
-
-                db.collection("todos").add({
-                    text: taskText,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                taskInput.value = "";
-            }
-
-            addTaskBtn.addEventListener('click', addTask);
-            taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
-        });
     </script>
 </body>
 </html>
