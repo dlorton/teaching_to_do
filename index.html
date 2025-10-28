@@ -3,106 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mr. Lorton's To-Do List</title>
+    <title>My First To-Do List</title>
     <style>
-        /* Basic styling for a clean look */
-        body {
-            font-family: sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .input-area {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        #task-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        #add-task-btn {
-            padding: 10px 15px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #add-task-btn:hover {
-            background-color: #0056b3;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            background: #fff;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px; /* NEW: Add some space between text and buttons */
-        }
-        li:first-child {
-            border-top: 1px solid #eee;
-        }
-        /* NEW: A container for our buttons to keep them together */
-        .button-container {
-            display: flex;
-            gap: 5px;
-        }
-        /* A class for the task text itself */
-        .task-text {
-            flex-grow: 1; /* Allows text to take up available space */
-        }
-
-        /* Generic button styling */
-        .btn {
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .edit-btn { background-color: #ffc107; } /* Yellow */
-        .save-btn { background-color: #28a745; } /* Green */
-        .delete-btn { background-color: #dc3545; } /* Red */
-
+        /* CSS is unchanged from the previous step */
+        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { text-align: center; color: #333; }
+        .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        #task-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        #add-task-btn { padding: 10px 15px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; }
+        #add-task-btn:hover { background-color: #0056b3; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        li:first-child { border-top: 1px solid #eee; }
+        .button-container { display: flex; gap: 5px; }
+        .task-text { flex-grow: 1; }
+        .btn { color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .edit-btn { background-color: #ffc107; }
+        .save-btn { background-color: #28a745; }
+        .delete-btn { background-color: #dc3545; }
         .edit-btn:hover { background-color: #e0a800; }
         .save-btn:hover { background-color: #218838; }
         .delete-btn:hover { background-color: #c82333; }
-
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>My To-Do List</h1>
         <div class="input-area">
             <input type="text" id="task-input" placeholder="Add a new task...">
             <button id="add-task-btn">Add Task</button>
         </div>
-        <ul id="task-list">
-            <!-- New tasks will be added here by JavaScript -->
-        </ul>
+        <ul id="task-list"></ul>
     </div>
 
     <script>
@@ -111,88 +43,121 @@
             const addTaskBtn = document.getElementById('add-task-btn');
             const taskList = document.getElementById('task-list');
 
+            // --- THE BIG SHIFT: DATA IS THE SOURCE OF TRUTH ---
+
+            // 1. LOAD: Try to get the to-do list from localStorage. If it's not there, start with an empty array.
+            let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+            // 2. SAVE: A function to save the current 'todos' array to localStorage.
+            //    We must convert the array to a string (JSON format) to store it.
+            function saveTodos() {
+                localStorage.setItem('todos', JSON.stringify(todos));
+            }
+
+            // 3. RENDER: The most important new function. It builds the HTML list from the 'todos' array.
+            function renderTodos() {
+                // Clear the existing list in the HTML to avoid duplicates
+                taskList.innerHTML = '';
+
+                // Loop through each 'todo' object in our 'todos' array
+                todos.forEach(todo => {
+                    // Create all the elements for the task item (this code is moved from 'addTask')
+                    const listItem = document.createElement('li');
+                    
+                    // We assign the todo's ID to the HTML element. This is crucial for finding it later.
+                    listItem.setAttribute('data-id', todo.id);
+
+                    const taskSpan = document.createElement('span');
+                    taskSpan.textContent = todo.text;
+                    taskSpan.className = 'task-text';
+
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.className = 'btn edit-btn';
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.className = 'btn delete-btn';
+
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'button-container';
+                    buttonContainer.appendChild(editBtn);
+                    buttonContainer.appendChild(deleteBtn);
+
+                    listItem.appendChild(taskSpan);
+                    listItem.appendChild(buttonContainer);
+                    taskList.appendChild(listItem);
+
+                    // --- Event Listeners are now inside the render function ---
+
+                    deleteBtn.addEventListener('click', () => {
+                        // Find the index of the todo to delete using its ID
+                        const todoIndex = todos.findIndex(t => t.id === todo.id);
+                        // Remove it from the 'todos' array
+                        todos.splice(todoIndex, 1);
+                        // Save the updated array and re-render the list
+                        saveTodos();
+                        renderTodos();
+                    });
+
+                    editBtn.addEventListener('click', () => {
+                        // This logic is mostly the same, but it updates the 'todos' array
+                        const editInput = document.createElement('input');
+                        editInput.type = 'text';
+                        editInput.value = taskSpan.textContent;
+                        editInput.className = 'task-text';
+
+                        const saveBtn = document.createElement('button');
+                        saveBtn.textContent = 'Save';
+                        saveBtn.className = 'btn save-btn';
+
+                        listItem.replaceChild(editInput, taskSpan);
+                        buttonContainer.replaceChild(saveBtn, editBtn);
+                        editInput.focus();
+
+                        saveBtn.addEventListener('click', () => {
+                            const updatedText = editInput.value.trim();
+                            if (updatedText) {
+                                // Find the todo in the array and update its text property
+                                const todoToUpdate = todos.find(t => t.id === todo.id);
+                                todoToUpdate.text = updatedText;
+                                // Save and re-render
+                                saveTodos();
+                                renderTodos();
+                            }
+                        });
+                    });
+                });
+            }
+
+            // 4. REFACTOR 'addTask'
             function addTask() {
                 const taskText = taskInput.value.trim();
                 if (taskText === "") return;
 
-                const listItem = document.createElement('li');
+                // Create a new task OBJECT
+                const newTask = {
+                    text: taskText,
+                    id: Date.now() // Use a timestamp as a simple unique ID
+                };
 
-                // --- START OF MAJOR CHANGES ---
+                // Add the new object to our 'todos' array
+                todos.push(newTask);
 
-                // 1. Create a span for the text
-                const taskSpan = document.createElement('span');
-                taskSpan.textContent = taskText;
-                taskSpan.className = 'task-text';
-
-                // 2. Create the buttons (Edit and Delete)
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                editBtn.className = 'btn edit-btn';
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'btn delete-btn';
-
-                // 3. Create a container for the buttons to group them
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'button-container';
-                buttonContainer.appendChild(editBtn);
-                buttonContainer.appendChild(deleteBtn);
-
-                // 4. Assemble the list item
-                listItem.appendChild(taskSpan);
-                listItem.appendChild(buttonContainer);
-                taskList.appendChild(listItem);
-
-                // 5. Add the "Delete" functionality (same as before)
-                deleteBtn.addEventListener('click', () => {
-                    listItem.remove();
-                });
-
-                // 6. Add the "Edit" functionality (ALL NEW LOGIC)
-                editBtn.addEventListener('click', () => {
-                    // Create an input field for editing
-                    const editInput = document.createElement('input');
-                    editInput.type = 'text';
-                    editInput.value = taskSpan.textContent;
-                    editInput.className = 'task-text'; // Use same class to maintain layout
-
-                    // Create a "Save" button
-                    const saveBtn = document.createElement('button');
-                    saveBtn.textContent = 'Save';
-                    saveBtn.className = 'btn save-btn';
-
-                    // SWAP: Replace the text span with the input field
-                    listItem.replaceChild(editInput, taskSpan);
-                    // SWAP: Replace the "Edit" button with the "Save" button
-                    buttonContainer.replaceChild(saveBtn, editBtn);
-                    
-                    // Focus the input field for the user
-                    editInput.focus();
-
-                    // Add logic for the "Save" button
-                    saveBtn.addEventListener('click', () => {
-                        const updatedText = editInput.value.trim();
-                        if (updatedText) { // Only save if there's some text
-                            taskSpan.textContent = updatedText;
-                        }
-                        // SWAP BACK: Put the text span back
-                        listItem.replaceChild(taskSpan, editInput);
-                        // SWAP BACK: Put the "Edit" button back
-                        buttonContainer.replaceChild(editBtn, saveBtn);
-                    });
-                });
-                
-                // --- END OF MAJOR CHANGES ---
+                // Save the array and re-render the entire list
+                saveTodos();
+                renderTodos();
 
                 taskInput.value = "";
             }
 
+            // --- INITIALIZATION ---
             addTaskBtn.addEventListener('click', addTask);
             taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
+
+            // Finally, call renderTodos() once on page load to display any saved tasks.
+            renderTodos();
         });
     </script>
-
 </body>
 </html>
-
