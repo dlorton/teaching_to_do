@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My First To-Do List</title>
     <style>
-        /* CSS is unchanged from the previous step */
+        /* CSS is unchanged */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { text-align: center; color: #333; }
@@ -22,9 +22,6 @@
         .edit-btn { background-color: #ffc107; }
         .save-btn { background-color: #28a745; }
         .delete-btn { background-color: #dc3545; }
-        .edit-btn:hover { background-color: #e0a800; }
-        .save-btn:hover { background-color: #218838; }
-        .delete-btn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
@@ -37,36 +34,51 @@
         <ul id="task-list"></ul>
     </div>
 
+    <!-- 1. Include the Firebase SDK (Software Development Kit) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+
     <script>
+        // ===================================================================
+        // VVV PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE VVV
+        // ===================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
+            authDomain: "teaching-to-do-list.firebaseapp.com",
+            projectId: "teaching-to-do-list",
+            storageBucket: "teaching-to-do-list.firebasestorage.app",
+            messagingSenderId: "436829328408",
+            appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
+            measurementId: "G-32552MXKEK"
+          };
+        // ===================================================================
+        // ^^^ END OF FIREBASE CONFIGURATION ^^^
+        // ===================================================================
+
+
+        // Initialize Firebase and Firestore
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         document.addEventListener('DOMContentLoaded', () => {
             const taskInput = document.getElementById('task-input');
             const addTaskBtn = document.getElementById('add-task-btn');
             const taskList = document.getElementById('task-list');
 
-            // --- THE BIG SHIFT: DATA IS THE SOURCE OF TRUTH ---
+            // Listen for REAL-TIME updates from Firestore
+            db.collection("todos").orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                const todos = [];
+                snapshot.forEach(doc => {
+                    todos.push({ id: doc.id, ...doc.data() });
+                });
+                renderTodos(todos);
+            });
 
-            // 1. LOAD: Try to get the to-do list from localStorage. If it's not there, start with an empty array.
-            let todos = JSON.parse(localStorage.getItem('todos')) || [];
-
-            // 2. SAVE: A function to save the current 'todos' array to localStorage.
-            //    We must convert the array to a string (JSON format) to store it.
-            function saveTodos() {
-                localStorage.setItem('todos', JSON.stringify(todos));
-            }
-
-            // 3. RENDER: The most important new function. It builds the HTML list from the 'todos' array.
-            function renderTodos() {
-                // Clear the existing list in the HTML to avoid duplicates
+            // RENDER function takes the 'todos' array as an argument
+            function renderTodos(todos) {
                 taskList.innerHTML = '';
-
-                // Loop through each 'todo' object in our 'todos' array
                 todos.forEach(todo => {
-                    // Create all the elements for the task item (this code is moved from 'addTask')
                     const listItem = document.createElement('li');
-                    
-                    // We assign the todo's ID to the HTML element. This is crucial for finding it later.
-                    listItem.setAttribute('data-id', todo.id);
-
                     const taskSpan = document.createElement('span');
                     taskSpan.textContent = todo.text;
                     taskSpan.className = 'task-text';
@@ -88,20 +100,12 @@
                     listItem.appendChild(buttonContainer);
                     taskList.appendChild(listItem);
 
-                    // --- Event Listeners are now inside the render function ---
-
+                    // --- Event Listeners now talk to Firestore ---
                     deleteBtn.addEventListener('click', () => {
-                        // Find the index of the todo to delete using its ID
-                        const todoIndex = todos.findIndex(t => t.id === todo.id);
-                        // Remove it from the 'todos' array
-                        todos.splice(todoIndex, 1);
-                        // Save the updated array and re-render the list
-                        saveTodos();
-                        renderTodos();
+                        db.collection("todos").doc(todo.id).delete();
                     });
 
                     editBtn.addEventListener('click', () => {
-                        // This logic is mostly the same, but it updates the 'todos' array
                         const editInput = document.createElement('input');
                         editInput.type = 'text';
                         editInput.value = taskSpan.textContent;
@@ -118,45 +122,28 @@
                         saveBtn.addEventListener('click', () => {
                             const updatedText = editInput.value.trim();
                             if (updatedText) {
-                                // Find the todo in the array and update its text property
-                                const todoToUpdate = todos.find(t => t.id === todo.id);
-                                todoToUpdate.text = updatedText;
-                                // Save and re-render
-                                saveTodos();
-                                renderTodos();
+                                db.collection("todos").doc(todo.id).update({ text: updatedText });
                             }
                         });
                     });
                 });
             }
 
-            // 4. REFACTOR 'addTask'
+            // addTask now adds a new document to Firestore
             function addTask() {
                 const taskText = taskInput.value.trim();
                 if (taskText === "") return;
 
-                // Create a new task OBJECT
-                const newTask = {
+                db.collection("todos").add({
                     text: taskText,
-                    id: Date.now() // Use a timestamp as a simple unique ID
-                };
-
-                // Add the new object to our 'todos' array
-                todos.push(newTask);
-
-                // Save the array and re-render the entire list
-                saveTodos();
-                renderTodos();
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
 
                 taskInput.value = "";
             }
 
-            // --- INITIALIZATION ---
             addTaskBtn.addEventListener('click', addTask);
             taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
-
-            // Finally, call renderTodos() once on page load to display any saved tasks.
-            renderTodos();
         });
     </script>
 </body>
