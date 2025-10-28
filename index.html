@@ -56,11 +56,24 @@
             background: #fff;
             padding: 12px;
             border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
+            display: flex; /* NEW: Use flexbox for alignment */
+            justify-content: space-between; /* NEW: Pushes items to opposite ends */
+            align-items: center; /* NEW: Vertically aligns items in the middle */
         }
         li:first-child {
             border-top: 1px solid #eee;
+        }
+        /* NEW: Style for our delete button */
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
@@ -69,7 +82,7 @@
     <div class="container">
         <h1>My To-Do List</h1>
         <div class="input-area">
-            <input type="text" id="task-input" placeholder="Add a new task... you freakin' idiot">
+            <input type="text" id="task-input" placeholder="Add a new task...">
             <button id="add-task-btn">Add Task</button>
         </div>
         <ul id="task-list">
@@ -78,41 +91,53 @@
     </div>
 
     <script>
-        // Wait for the page to fully load before running the script
         document.addEventListener('DOMContentLoaded', () => {
 
-            // Get the HTML elements we need to work with
             const taskInput = document.getElementById('task-input');
             const addTaskBtn = document.getElementById('add-task-btn');
             const taskList = document.getElementById('task-list');
 
-            // This function will run when the "Add Task" button is clicked
             function addTask() {
-                // Get the text from the input field and remove extra whitespace
                 const taskText = taskInput.value.trim();
-
-                // If the input is empty, do nothing
                 if (taskText === "") {
                     return;
                 }
 
-                // Create a new list item element (<li>)
+                // --- START OF CHANGES ---
+
+                // 1. Create the list item (same as before)
                 const listItem = document.createElement('li');
 
-                // Set the text inside the list item
-                listItem.textContent = taskText;
+                // 2. Create a span to hold the task text
+                //    This helps separate the text from the button
+                const taskSpan = document.createElement('span');
+                taskSpan.textContent = taskText;
 
-                // Add the new list item to our unordered list (<ul>)
+                // 3. Create the delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn'; // Assign a class for styling
+
+                // 4. Add the "magic": Tell the button what to do when clicked
+                deleteBtn.addEventListener('click', () => {
+                    // When this specific button is clicked, remove its parent, the `listItem`
+                    listItem.remove();
+                });
+
+                // 5. Assemble the list item
+                //    Put the text span and the delete button INSIDE the list item
+                listItem.appendChild(taskSpan);
+                listItem.appendChild(deleteBtn);
+
+                // 6. Add the fully assembled list item to the main list on the page
                 taskList.appendChild(listItem);
+                
+                // --- END OF CHANGES ---
 
-                // Clear the input field for the next task
                 taskInput.value = "";
             }
 
-            // Tell the button to run our addTask function when it's clicked
             addTaskBtn.addEventListener('click', addTask);
-            
-            // Allow pressing 'Enter' in the input field to also add the task
             taskInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     addTask();
@@ -123,4 +148,3 @@
 
 </body>
 </html>
-
