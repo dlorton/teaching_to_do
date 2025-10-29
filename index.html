@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
     <style>
-        /* CSS is correct and complete */
+        /* CSS is correct and unchanged */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h1 { text-align: center; color: #333; }
@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <!-- HTML is correct -->
+    <!-- HTML is correct and unchanged -->
     <div class="container">
         <div id="auth-container">
             <h1>My To-Do List</h1>
@@ -61,7 +61,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     
     <script>
-        // Your safe, redacted firebaseConfig object goes here
+        // Config and initial setup is correct
         const firebaseConfig = {
             apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
             authDomain: "teaching-to-do-list.firebaseapp.com",
@@ -71,20 +71,19 @@
             appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
             measurementId: "G-32552MXKEK"
         };
-        // Initialize Firebase & get element references
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         const loginBtn = document.getElementById('login-btn');
-        // --- THIS IS THE CORRECTED LINE ---
         const logoutBtn = document.getElementById('logout-btn');
         const newCategoryInput = document.getElementById('new-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const categoriesContainer = document.getElementById('categories-container');
 
-        let unsubscribeFromCategories;
+        // This object will hold our listeners so we can clean them up
+        let listeners = {};
 
         // Auth state change logic
         auth.onAuthStateChanged(user => {
@@ -93,28 +92,34 @@
                 appContainer.classList.remove('hidden');
                 
                 const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
-                if (unsubscribeFromCategories) unsubscribeFromCategories();
-                unsubscribeFromCategories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                
+                // Clean up old listener if it exists
+                if (listeners.categories) listeners.categories();
+
+                listeners.categories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                     const categories = [];
-                    snapshot.forEach( doc => {
+                    snapshot.forEach(doc => {
                         categories.push({ id: doc.id, ...doc.data() });
                     });
-                    renderCategories(categories);
+                    renderCategories(categories, user.uid);
                 });
             } else {
                 authContainer.classList.remove('hidden');
                 appContainer.classList.add('hidden');
                 categoriesContainer.innerHTML = '';
-                if (unsubscribeFromCategories) unsubscribeFromCategories();
+                // Clean up all listeners on logout
+                Object.values(listeners).forEach(unsubscribe => unsubscribe());
+                listeners = {};
             }
         });
         
         // Render categories function
-        function renderCategories(categories) {
+        function renderCategories(categories, userId) {
             categoriesContainer.innerHTML = '';
             categories.forEach(category => {
+                // --- THIS IS THE CORRECTED LINE ---
                 const categoryBlockHTML = `
-                    <div class="category--block" data-category-id="${category.id}">
+                    <div class="category-block" data-category-id="${category.id}">
                         <div class="category-header">
                             <span class="category-title">${category.name}</span>
                             <div class="category-actions">
@@ -130,31 +135,46 @@
                     </div>
                 `;
                 categoriesContainer.innerHTML += categoryBlockHTML;
+
+                // --- NEW: Start listening for tasks for THIS category ---
+                const taskListElement = categoriesContainer.querySelector(`[data-category-id="${category.id}"] .task-list`);
+                const tasksCollection = db.collection('users').doc(userId).collection('categories').doc(category.id).collection('tasks');
+                
+                // Clean up old listener for this specific category if it exists
+                if (listeners[category.id]) listeners[category.id]();
+
+                listeners[category.id] = tasksCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                    const tasks = [];
+                    snapshot.forEach(doc => {
+                        tasks.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderTasks(tasks, taskListElement); // Render tasks into the correct list
+                });
+            });
+        }
+
+        // --- NEW: Function to render the tasks for a specific category ---
+        function renderTasks(tasks, taskListElement) {
+            taskListElement.innerHTML = ''; // Clear just this category's list
+            tasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.innerHTML = `
+                    <span class="task-text">${task.text}</span>
+                    <div class="button-container">
+                        <button class="btn edit-btn">Edit</button>
+                        <button class="btn delete-btn">Delete</button>
+                    </div>
+                `;
+                taskListElement.appendChild(taskItem);
             });
         }
 
         // Auth button listeners
-        loginBtn.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
-        });
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut();
-        });
+        loginBtn.addEventListener('click', () => { /* ... */ });
+        logoutBtn.addEventListener('click', () => { /* ... */ });
         
         // Add category function and listeners
-        function addCategory() {
-            const categoryName = newCategoryInput.value.trim();
-            const user = auth.currentUser;
-            if (categoryName === "" || !user) return;
-            const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
-            categoriesCollection.add({
-                name: categoryName,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                newCategoryInput.value = "";
-            });
-        }
+        function addCategory() { /* ... */ }
         addCategoryBtn.addEventListener('click', addCategory);
         newCategoryInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addCategory(); });
 
@@ -180,9 +200,7 @@
             tasksCollection.add({
                 text: taskText,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(error => {
-                console.error("Error adding task: ", error);
-            });
+            }).catch(error => console.error("Error adding task: ", error));
         }
     </script>
 </body>
