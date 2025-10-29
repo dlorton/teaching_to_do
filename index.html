@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
     <style>
-        /* --- THIS IS THE FULL, CORRECT CSS --- */
+        /* CSS is correct and complete */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h1 { text-align: center; color: #333; }
@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <!-- HTML is the same correct structure -->
+    <!-- HTML is correct -->
     <div class="container">
         <div id="auth-container">
             <h1>My To-Do List</h1>
@@ -71,7 +71,6 @@
             appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
             measurementId: "G-32552MXKEK"
         };
-
         // Initialize Firebase & get element references
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -79,7 +78,8 @@
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         const loginBtn = document.getElementById('login-btn');
-        const logoutBtn =.getElementById('logout-btn');
+        // --- THIS IS THE CORRECTED LINE ---
+        const logoutBtn = document.getElementById('logout-btn');
         const newCategoryInput = document.getElementById('new-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const categoriesContainer = document.getElementById('categories-container');
@@ -96,7 +96,7 @@
                 if (unsubscribeFromCategories) unsubscribeFromCategories();
                 unsubscribeFromCategories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                     const categories = [];
-                    snapshot.forEach(doc => {
+                    snapshot.forEach( doc => {
                         categories.push({ id: doc.id, ...doc.data() });
                     });
                     renderCategories(categories);
@@ -114,7 +114,7 @@
             categoriesContainer.innerHTML = '';
             categories.forEach(category => {
                 const categoryBlockHTML = `
-                    <div class="category-block" data-category-id="${category.id}">
+                    <div class="category--block" data-category-id="${category.id}">
                         <div class="category-header">
                             <span class="category-title">${category.name}</span>
                             <div class="category-actions">
@@ -187,4 +187,3 @@
     </script>
 </body>
 </html>
-
