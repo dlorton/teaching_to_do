@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
     <style>
-        /* --- CSS is UNCHANGED from the last step --- */
+        /* --- CSS is UNCHANGED --- */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h1 { text-align: center; color: #333; }
@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <!-- HTML is UNCHANGED from the last step -->
+    <!-- HTML is UNCHANGED -->
     <div class="container">
         <div id="auth-container">
             <h1>My To-Do List</h1>
@@ -60,52 +60,100 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     
-    <!-- *** THIS SCRIPT SECTION HAS BEEN COMPLETELY REWRITTEN *** -->
     <script>
         // Your safe, redacted firebaseConfig object goes here
         const firebaseConfig = {
-            apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
-            authDomain: "teaching-to-do-list.firebaseapp.com",
-            projectId: "teaching-to-do-list",
-            storageBucket: "teaching-to-do-list.firebasestorage.app",
-            messagingSenderId: "436829328408",
-            appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
-            measurementId: "G-32552MXKEK"
+          apiKey: "YOUR_SAFE_API_KEY",
+          authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+          // ... etc
         };
 
-        // Initialize Firebase (unchanged)
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         
-        // Get references to the main containers and auth buttons (unchanged)
+        // Get references to elements
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
-        
-        // --- NEW: Get references to our new category elements ---
         const newCategoryInput = document.getElementById('new-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const categoriesContainer = document.getElementById('categories-container');
 
-        // Main authentication listener (unchanged structure)
+        // --- NEW: A variable to hold our listener so we can unsubscribe on logout ---
+        let unsubscribeFromCategories;
+
+        // Main authentication listener
         auth.onAuthStateChanged(user => {
             if (user) {
                 // User is logged in
                 authContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
                 
-                // TODO: We will add the code to LISTEN for and DISPLAY categories here later.
+                // --- NEW: Set up the real-time listener for categories ---
+                const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
+                
+                // Unsubscribe from any old listener
+                if (unsubscribeFromCategories) {
+                    unsubscribeFromCategories();
+                }
+
+                unsubscribeFromCategories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                    const categories = [];
+                    snapshot.forEach(doc => {
+                        // Get the data AND the unique ID of the document
+                        categories.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCategories(categories); // Call the function to draw them on the screen
+                });
                 
             } else {
                 // User is logged out
                 authContainer.classList.remove('hidden');
                 appContainer.classList.add('hidden');
-                categoriesContainer.innerHTML = ''; // Clear the screen on logout
+                categoriesContainer.innerHTML = ''; // Clear the screen
+                
+                // --- NEW: Unsubscribe when the user logs out ---
+                if (unsubscribeFromCategories) {
+                    unsubscribeFromCategories();
+                }
             }
         });
         
+        // --- NEW: Function to render the categories on the screen ---
+        function renderCategories(categories) {
+            // 1. Clear the container first
+            categoriesContainer.innerHTML = '';
+
+            // 2. Loop through each category from the database
+            categories.forEach(category => {
+                // 3. For each one, create the HTML block as a string
+                const categoryBlockHTML = `
+                    <div class="category-block" data-category-id="${category.id}">
+                        <div class="category-header">
+                            <span class="category-title">${category.name}</span>
+                            <div class="category-actions">
+                                <button class="btn edit-btn">Edit</button>
+                                <button class="btn delete-btn">Delete</button>
+                            </div>
+                        </div>
+                        <div class="add-task-area">
+                            <input type="text" class="new-task-input" placeholder="Add a new task...">
+                            <button class="add-task-btn">Add</button>
+                        </div>
+                        <ul class="task-list">
+                            <!-- Tasks will go here later -->
+                        </ul>
+                    </div>
+                `;
+
+                // 4. Add the new HTML block to the container
+                categoriesContainer.innerHTML += categoryBlockHTML;
+            });
+        }
+
         // Auth button listeners (unchanged)
         loginBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -116,42 +164,24 @@
             auth.signOut();
         });
 
-        // --- NEW: Function to add a category to Firestore ---
+        // Function to add a category (unchanged)
         function addCategory() {
             const categoryName = newCategoryInput.value.trim();
             const user = auth.currentUser;
-
-            // 1. Check if the input is empty or if the user is not logged in
-            if (categoryName === "" || !user) {
-                return; // Stop the function
-            }
-
-            // 2. Get a reference to the user's 'categories' collection
+            if (categoryName === "" || !user) return;
             const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
-
-            // 3. Add a new document to that collection
             categoriesCollection.add({
                 name: categoryName,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                // 4. Clear the input field for the next entry
                 newCategoryInput.value = "";
-                console.log("Category added successfully!");
-            }).catch(error => {
-                console.error("Error adding category: ", error);
             });
         }
 
-        // --- NEW: Attach the event listener to the "Add Category" button ---
         addCategoryBtn.addEventListener('click', addCategory);
-
-        // Also allow adding by pressing Enter in the input field
         newCategoryInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addCategory();
-            }
+            if (e.key === 'Enter') addCategory();
         });
     </script>
 </body>
 </html>
-
