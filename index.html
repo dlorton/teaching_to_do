@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
     <style>
-        /* CSS is correct and unchanged */
+        /* CSS is unchanged and correct */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h1 { text-align: center; color: #333; }
@@ -38,22 +38,8 @@
 <body>
     <!-- HTML is correct and unchanged -->
     <div class="container">
-        <div id="auth-container">
-            <h1>My To-Do List</h1>
-            <p>Please sign in to continue</p>
-            <button id="login-btn" class="google-login-btn">Sign in with Google</button>
-        </div>
-        <div id="app-container" class="hidden">
-            <div id="app-header">
-                <h1>My To-Do List</h1>
-                <button id="logout-btn" class="logout-btn">Sign Out</button>
-            </div>
-            <div id="add-category-area">
-                <input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)">
-                <button id="add-category-btn">Add Category</button>
-            </div>
-            <div id="categories-container"></div>
-        </div>
+        <div id="auth-container"><h1>My To-Do List</h1><p>Please sign in to continue</p><button id="login-btn" class="google-login-btn">Sign in with Google</button></div>
+        <div id="app-container" class="hidden"><div id="app-header"><h1>My To-Do List</h1><button id="logout-btn" class="logout-btn">Sign Out</button></div><div id="add-category-area"><input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)"><button id="add-category-btn">Add Category</button></div><div id="categories-container"></div></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
@@ -61,7 +47,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     
     <script>
-        // Config and initial setup is correct
+        // --- CONFIG & INITIAL SETUP (Correct) ---
         const firebaseConfig = {
             apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
             authDomain: "teaching-to-do-list.firebaseapp.com",
@@ -81,126 +67,152 @@
         const newCategoryInput = document.getElementById('new-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const categoriesContainer = document.getElementById('categories-container');
-
-        // This object will hold our listeners so we can clean them up
         let listeners = {};
 
-        // Auth state change logic
+        // --- AUTHENTICATION (Correct) ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 authContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-                
-                const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
-                
-                // Clean up old listener if it exists
-                if (listeners.categories) listeners.categories();
-
-                listeners.categories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
-                    const categories = [];
-                    snapshot.forEach(doc => {
-                        categories.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderCategories(categories, user.uid);
-                });
+                attachUserListeners(user.uid);
             } else {
                 authContainer.classList.remove('hidden');
                 appContainer.classList.add('hidden');
-                categoriesContainer.innerHTML = '';
-                // Clean up all listeners on logout
-                Object.values(listeners).forEach(unsubscribe => unsubscribe());
-                listeners = {};
+                cleanupListeners();
             }
         });
-        
-        // Render categories function
-        function renderCategories(categories, userId) {
+
+        function attachUserListeners(userId) {
+            const categoriesCollection = db.collection('users').doc(userId).collection('categories');
+            if (listeners.categories) listeners.categories();
+            listeners.categories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                const categories = [];
+                snapshot.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
+                renderCategories(categories, userId);
+            });
+        }
+
+        function cleanupListeners() {
+            Object.values(listeners).forEach(unsubscribe => unsubscribe());
+            listeners = {};
             categoriesContainer.innerHTML = '';
+        }
+
+        // --- RENDERING (Improved & Corrected) ---
+        function renderCategories(categories, userId) {
+            categoriesContainer.innerHTML = ''; // Clear the container
             categories.forEach(category => {
-                // --- THIS IS THE CORRECTED LINE ---
-                const categoryBlockHTML = `
-                    <div class="category-block" data-category-id="${category.id}">
-                        <div class="category-header">
-                            <span class="category-title">${category.name}</span>
-                            <div class="category-actions">
-                                <button class="btn edit-btn">Edit</button>
-                                <button class="btn delete-btn">Delete</button>
-                            </div>
+                const categoryBlock = document.createElement('div');
+                categoryBlock.className = 'category-block';
+                categoryBlock.dataset.categoryId = category.id;
+                categoryBlock.innerHTML = `
+                    <div class="category-header">
+                        <span class="category-title">${category.name}</span>
+                        <div class="category-actions">
+                            <button class="btn edit-btn category-edit-btn">Edit</button>
+                            <button class="btn delete-btn category-delete-btn">Delete</button>
                         </div>
-                        <div class="add-task-area">
-                            <input type="text" class="new-task-input" placeholder="Add a new task...">
-                            <button class="add-task-btn">Add</button>
-                        </div>
-                        <ul class="task-list"></ul>
                     </div>
+                    <div class="add-task-area">
+                        <input type="text" class="new-task-input" placeholder="Add a new task...">
+                        <button class="add-task-btn">Add</button>
+                    </div>
+                    <ul class="task-list"></ul>
                 `;
-                categoriesContainer.innerHTML += categoryBlockHTML;
+                categoriesContainer.appendChild(categoryBlock); // Use appendChild for efficiency
 
-                // --- NEW: Start listening for tasks for THIS category ---
-                const taskListElement = categoriesContainer.querySelector(`[data-category-id="${category.id}"] .task-list`);
+                const taskListElement = categoryBlock.querySelector('.task-list');
                 const tasksCollection = db.collection('users').doc(userId).collection('categories').doc(category.id).collection('tasks');
-                
-                // Clean up old listener for this specific category if it exists
                 if (listeners[category.id]) listeners[category.id]();
-
                 listeners[category.id] = tasksCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                     const tasks = [];
-                    snapshot.forEach(doc => {
-                        tasks.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderTasks(tasks, taskListElement); // Render tasks into the correct list
+                    snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+                    renderTasks(tasks, taskListElement, category.id);
                 });
             });
         }
 
-        // --- NEW: Function to render the tasks for a specific category ---
-        function renderTasks(tasks, taskListElement) {
-            taskListElement.innerHTML = ''; // Clear just this category's list
+        function renderTasks(tasks, taskListElement, categoryId) {
+            taskListElement.innerHTML = '';
             tasks.forEach(task => {
-                const taskItem = document.createElement('li');
+                const taskItem = document.createElement('li'); // This line was missing!
+                taskItem.dataset.taskId = task.id;
                 taskItem.innerHTML = `
                     <span class="task-text">${task.text}</span>
                     <div class="button-container">
-                        <button class="btn edit-btn">Edit</button>
-                        <button class="btn delete-btn">Delete</button>
+                        <button class="btn edit-btn task-edit-btn">Edit</button>
+                        <button class="btn delete-btn task-delete-btn">Delete</button>
                     </div>
                 `;
                 taskListElement.appendChild(taskItem);
             });
         }
 
-        // Auth button listeners
-        loginBtn.addEventListener('click', () => { /* ... */ });
-        logoutBtn.addEventListener('click', () => { /* ... */ });
-        
-        // Add category function and listeners
-        function addCategory() { /* ... */ }
+        // --- EVENT LISTENERS (Corrected & Consolidated) ---
+        loginBtn.addEventListener('click', () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()));
+        logoutBtn.addEventListener('click', () => auth.signOut());
         addCategoryBtn.addEventListener('click', addCategory);
-        newCategoryInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addCategory(); });
+        newCategoryInput.addEventListener('keypress', e => { if (e.key === 'Enter') addCategory(); });
 
-        // Event Delegation for all clicks inside the categories container
-        categoriesContainer.addEventListener('click', (e) => {
+        categoriesContainer.addEventListener('click', e => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const categoryBlock = e.target.closest('.category-block');
+            if (!categoryBlock) return;
+            const categoryId = categoryBlock.dataset.categoryId;
+
+            // Handle adding a task
             if (e.target.classList.contains('add-task-btn')) {
-                const categoryBlock = e.target.closest('.category-block');
-                const categoryId = categoryBlock.dataset.categoryId;
                 const taskInput = categoryBlock.querySelector('.new-task-input');
                 const taskText = taskInput.value.trim();
-                if (taskText && categoryId) {
+                if (taskText) {
                     addTask(taskText, categoryId);
                     taskInput.value = '';
                 }
             }
+            // Handle deleting a task
+            if (e.target.classList.contains('task-delete-btn')) {
+                const taskItem = e.target.closest('li');
+                const taskId = taskItem.dataset.taskId;
+                if (confirm('Are you sure you want to delete this task?')) {
+                    deleteTask(categoryId, taskId);
+                }
+            }
+            // Handle deleting a category
+            if (e.target.classList.contains('category-delete-btn')) {
+                 if (confirm('Are you sure you want to delete this entire category and all its tasks? This cannot be undone.')) {
+                    deleteCategory(categoryId);
+                }
+            }
         });
 
-        // Function to add a TASK to a specific category
+        // --- DATABASE ACTIONS (Corrected & Expanded) ---
+        function addCategory() {
+            const categoryName = newCategoryInput.value.trim();
+            const user = auth.currentUser;
+            if (!categoryName || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').add({ name: categoryName, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            newCategoryInput.value = '';
+        }
+
         function addTask(taskText, categoryId) {
             const user = auth.currentUser;
-            if (!user) return;
-            const tasksCollection = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks');
-            tasksCollection.add({
-                text: taskText,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(error => console.error("Error adding task: ", error));
+            if (!taskText || !categoryId || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').add({ text: taskText, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+
+        function deleteCategory(categoryId) {
+            const user = auth.currentUser;
+if (!categoryId || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).delete();
+            // Note: Deleting a document does NOT delete its subcollections in the client SDK. 
+            // The tasks will become "orphaned" but inaccessible. For a production app, this would be handled with a Cloud Function.
+        }
+
+        function deleteTask(categoryId, taskId) {
+            const user = auth.currentUser;
+            if (!categoryId || !taskId || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId).delete();
         }
     </script>
 </body>
