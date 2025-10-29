@@ -3,27 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First To-Do List</title>
+    <title>My To-Do List</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        /* --- General & Auth Styles (Mostly Unchanged) --- */
+        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; /* Made it a bit wider */ }
         h1 { text-align: center; color: #333; }
-        
-        /* NEW: Styles for login/logout and visibility control */
         .hidden { display: none !important; }
-        #auth-container { text-align: center; }
-        #app-header { display: flex; justify-content: space-between; align-items: center; }
+        #auth-container { text-align: center; margin-top: 50px; }
+        #app-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         .google-login-btn, .logout-btn { padding: 10px 20px; border-radius: 5px; border: none; font-size: 16px; cursor: pointer; background-color: #4285F4; color: white; }
         .logout-btn { background-color: #6c757d; }
 
-        /* Unchanged Styles */
-        .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
-        #task-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        #add-task-btn { padding: 10px 15px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; }
-        ul { list-style-type: none; padding: 0; }
-        li { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        li:first-child { border-top: 1px solid #eee; }
-        .button-container { display: flex; gap: 5px; }
+        /* --- NEW: Add Category Area --- */
+        #add-category-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        #new-category-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #add-category-btn {
+            padding: 10px 15px;
+            border: none;
+            background-color: #28a745; /* Green for adding */
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* --- NEW: Main container for all category blocks --- */
+        #categories-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Space between category blocks */
+        }
+        
+        /* --- NEW: Styling for a single Category Block --- */
+        .category-block {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .category-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .category-actions .btn {
+            font-size: 0.8em; /* Make buttons smaller */
+        }
+
+        /* --- NEW: Styling for adding a task WITHIN a category --- */
+        .add-task-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .new-task-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .add-task-btn {
+            padding: 8px 12px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* --- Task List Styles (Mostly Unchanged) --- */
+        .task-list { list-style-type: none; padding: 0; }
+        .task-list li { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .task-list li:first-child { border-top: 1px solid #eee; }
         .task-text { flex-grow: 1; }
         .btn { color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         .edit-btn { background-color: #ffc107; }
@@ -33,173 +99,70 @@
 </head>
 <body>
     <div class="container">
-        <!-- NEW: Container for when user is logged OUT -->
+        <!-- Auth Container is unchanged -->
         <div id="auth-container">
             <h1>My To-Do List</h1>
             <p>Please sign in to continue</p>
             <button id="login-btn" class="google-login-btn">Sign in with Google</button>
         </div>
 
-        <!-- NEW: Container for the main app, hidden by default -->
+        <!-- App Container now has a completely new structure -->
         <div id="app-container" class="hidden">
             <div id="app-header">
                 <h1>My To-Do List</h1>
                 <button id="logout-btn" class="logout-btn">Sign Out</button>
             </div>
-            <div class="input-area">
-                <input type="text" id="task-input" placeholder="Add a new task...">
-                <button id="add-task-btn">Add Task</button>
+
+            <!-- NEW: Area to add a new category -->
+            <div id="add-category-area">
+                <input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)">
+                <button id="add-category-btn">Add Category</button>
             </div>
-            <ul id="task-list"></ul>
+            
+            <!-- NEW: This div will be populated with category blocks by our JavaScript -->
+            <div id="categories-container">
+                <!-- 
+                    A "ghost" example of what our JavaScript will build.
+                    This is just a comment for you to see the structure.
+                
+                    <div class="category-block">
+                        <div class="category-header">
+                            <span class="category-title">Math 7</span>
+                            <div class="category-actions">
+                                <button class="btn edit-btn">Edit</button>
+                                <button class="btn delete-btn">Delete</button>
+                            </div>
+                        </div>
+                        <div class="add-task-area">
+                            <input type="text" class="new-task-input" placeholder="Add a new task...">
+                            <button class="add-task-btn">Add</button>
+                        </div>
+                        <ul class="task-list">
+                            <li>... tasks for Math 7 go here ...</li>
+                        </ul>
+                    </div> 
+                -->
+            </div>
         </div>
     </div>
 
-    <!-- ADDED firebase-auth-compat.js -->
+    <!-- The SCRIPT section is UNCHANGED for now, but it will be broken. -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-
     <script>
-        // Paste your SAFE firebaseConfig object here
+        // Your safe, redacted firebaseConfig object goes here
         const firebaseConfig = {
-            apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
-            authDomain: "teaching-to-do-list.firebaseapp.com",
-            projectId: "teaching-to-do-list",
-            storageBucket: "teaching-to-do-list.firebasestorage.app",
-            messagingSenderId: "436829328408",
-            appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
-            measurementId: "G-32552MXKEK"
+          apiKey: "YOUR_SAFE_API_KEY",
+          authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+          // ... etc
         };
 
-        // Initialize Firebase
+        // --- ALL JAVASCRIPT IS THE SAME AS BEFORE (and will not work correctly) ---
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth(); // NEW: Initialize Auth
-
-        // Get references to all our new elements
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const taskInput = document.getElementById('task-input');
-        const addTaskBtn = document.getElementById('add-task-btn');
-        const taskList = document.getElementById('task-list');
-
-        let unsubscribeFromTodos; // This will hold our real-time listener
-
-        // The CORE of our authentication logic
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // --- USER IS LOGGED IN ---
-                authContainer.classList.add('hidden');
-                appContainer.classList.remove('hidden');
-                
-                // NEW: All Firestore logic now happens securely inside this block
-                const userTodosCollection = db.collection('users').doc(user.uid).collection('todos');
-
-                // Start listening for this user's todos
-                unsubscribeFromTodos = userTodosCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
-                    const todos = [];
-                    snapshot.forEach(doc => {
-                        todos.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderTodos(todos, userTodosCollection); // Pass collection reference
-                });
-
-            } else {
-                // --- USER IS LOGGED OUT ---
-                authContainer.classList.remove('hidden');
-                appContainer.classList.add('hidden');
-                taskList.innerHTML = ''; // Clear the list
-
-                // If a listener is active, unsubscribe to prevent errors
-                if (unsubscribeFromTodos) {
-                    unsubscribeFromTodos();
-                }
-            }
-        });
-
-        // --- AUTH EVENT LISTENERS ---
-        loginBtn.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut();
-        });
-
-        // --- RENDER function is mostly the same, but uses the collection reference ---
-        function renderTodos(todos, collection) {
-            taskList.innerHTML = '';
-            todos.forEach(todo => {
-                const listItem = document.createElement('li');
-                // ... (code to create span, buttons is identical)
-                const taskSpan = document.createElement('span');
-                taskSpan.textContent = todo.text;
-                taskSpan.className = 'task-text';
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                editBtn.className = 'btn edit-btn';
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'btn delete-btn';
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'button-container';
-                buttonContainer.appendChild(editBtn);
-                buttonContainer.appendChild(deleteBtn);
-                listItem.appendChild(taskSpan);
-                listItem.appendChild(buttonContainer);
-                taskList.appendChild(listItem);
-
-                // Listeners now use the passed-in 'collection'
-                deleteBtn.addEventListener('click', () => {
-                    collection.doc(todo.id).delete();
-                });
-
-                editBtn.addEventListener('click', () => {
-                    // ... (edit logic is the same)
-                    const editInput = document.createElement('input');
-                    editInput.type = 'text';
-                    editInput.value = taskSpan.textContent;
-                    editInput.className = 'task-text';
-                    const saveBtn = document.createElement('button');
-                    saveBtn.textContent = 'Save';
-                    saveBtn.className = 'btn save-btn';
-                    listItem.replaceChild(editInput, taskSpan);
-                    buttonContainer.replaceChild(saveBtn, editBtn);
-                    editInput.focus();
-                    
-                    saveBtn.addEventListener('click', () => {
-                        const updatedText = editInput.value.trim();
-                        if (updatedText) {
-                            collection.doc(todo.id).update({ text: updatedText });
-                        }
-                    });
-                });
-            });
-        }
-        
-        // --- addTask now needs to know which user is logged in ---
-        function addTask() {
-            const taskText = taskInput.value.trim();
-            const user = auth.currentUser; // Get the currently logged-in user
-            
-            if (taskText === "" || !user) return;
-
-            // Get the correct collection for this user and add the task
-            db.collection('users').doc(user.uid).collection('todos').add({
-                text: taskText,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            taskInput.value = "";
-        }
-
-        addTaskBtn.addEventListener('click', addTask);
-        taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
-
+        const auth = firebase.auth();
+        // ... the rest of the old script ...
     </script>
 </body>
 </html>
-
