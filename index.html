@@ -1,1 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My To-Do List</title>
+    <style>/* CSS is UNCHANGED */</style>
+</head>
+<body>
+    <!-- HTML is UNCHANGED -->
+    <div class="container">
+        <div id="auth-container">
+            <h1>My To-Do List</h1>
+            <p>Please sign in to continue</p>
+            <button id="login-btn" class="google-login-btn">Sign in with Google</button>
+        </div>
+        <div id="app-container" class="hidden">
+            <div id="app-header">
+                <h1>My To-Do List</h1>
+                <button id="logout-btn" class="logout-btn">Sign Out</button>
+            </div>
+            <div id="add-category-area">
+                <input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)">
+                <button id="add-category-btn">Add Category</button>
+            </div>
+            <div id="categories-container"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Your safe, redacted firebaseConfig object goes here
+        const firebaseConfig = { /* ... */ };
+
+        // Initialize Firebase & get element references (all unchanged)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const newCategoryInput = document.getElementById('new-category-input');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const categoriesContainer = document.getElementById('categories-container');
+
+        let unsubscribeFromCategories;
+
+        // Auth state change logic (unchanged)
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                authContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                
+                const categoriesCollection = db.collection('users').doc(user.uid).collection('categories');
+                if (unsubscribeFromCategories) unsubscribeFromCategories();
+                unsubscribeFromCategories = categoriesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                    const categories = [];
+                    snapshot.forEach(doc => {
+                        categories.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCategories(categories);
+                });
+            } else {
+                authContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                categoriesContainer.innerHTML = '';
+                if (unsubscribeFromCategories) unsubscribeFromCategories();
+            }
+        });
+        
+        // Render categories function (unchanged)
+        function renderCategories(categories) {
+            categoriesContainer.innerHTML = '';
+            categories.forEach(category => {
+                const categoryBlockHTML = `
+                    <div class="category-block" data-category-id="${category.id}">
+                        <div class="category-header">
+                            <span class="category-title">${category.name}</span>
+                            <div class="category-actions">
+                                <button class="btn edit-btn">Edit</button>
+                                <button class="btn delete-btn">Delete</button>
+                            </div>
+                        </div>
+                        <div class="add-task-area">
+                            <input type="text" class="new-task-input" placeholder="Add a new task...">
+                            <button class="add-task-btn">Add</button>
+                        </div>
+                        <ul class="task-list"></ul>
+                    </div>
+                `;
+                categoriesContainer.innerHTML += categoryBlockHTML;
+            });
+        }
+
+        // Auth button listeners (unchanged)
+        loginBtn.addEventListener('click', () => { /* ... */ });
+        logoutBtn.addEventListener('click', () => { /* ... */ });
+        
+        // Add category function and listeners (unchanged)
+        function addCategory() { /* ... */ }
+        addCategoryBtn.addEventListener('click', addCategory);
+        newCategoryInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addCategory(); });
+
+
+        // --- NEW: Event Delegation for all clicks inside the categories container ---
+        categoriesContainer.addEventListener('click', (e) => {
+            // Check if the clicked element has the class 'add-task-btn'
+            if (e.target.classList.contains('add-task-btn')) {
+                // Find the parent category block to get its ID
+                const categoryBlock = e.target.closest('.category-block');
+                const categoryId = categoryBlock.dataset.categoryId;
+
+                // Find the input field within that same block
+                const taskInput = categoryBlock.querySelector('.new-task-input');
+                const taskText = taskInput.value.trim();
+
+                // If we have all the info, call the addTask function
+                if (taskText && categoryId) {
+                    addTask(taskText, categoryId);
+                    taskInput.value = ''; // Clear the input
+                }
+            }
+        });
+
+        // --- NEW: Function to add a TASK to a specific category in Firestore ---
+        function addTask(taskText, categoryId) {
+            const user = auth.currentUser;
+            if (!user) return; // Safety check
+
+            // This path is the key: users/{uid}/categories/{catId}/tasks
+            const tasksCollection = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks');
+            
+            tasksCollection.add({
+                text: taskText,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(error => {
+                console.error("Error adding task: ", error);
+            });
+        }
+
+    </script>
+</body>
+</html>
 
