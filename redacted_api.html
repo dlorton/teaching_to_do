@@ -147,6 +147,46 @@
             });
         }
 
+        // --- TOGGLE EDIT BUTTON ---
+        function toggleEditMode(taskItem, isEditing) {
+            const taskTextSpan = taskItem.querySelector('.task-text');
+            const buttonContainer = taskItem.querySelector('.button-container');
+
+        // Remove any existing edit input if there is one
+        const existingInput = taskItem.querySelector('.edit-input');
+        if (existingInput) {
+            taskItem.removeChild(existingInput);
+        }
+        
+        if (isEditing) {
+            // --- SWITCH TO EDIT MODE ---
+            taskTextSpan.style.display = 'none'; // Hide the original text
+            buttonContainer.style.display = 'none'; // Hide the original buttons
+    
+            // Create an input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-input'; // A class to find it later
+            input.value = taskTextSpan.textContent; // Pre-fill with existing text
+            
+            // Create a save button
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn save-btn';
+            saveBtn.textContent = 'Save';
+    
+            // Add the new elements to the task item
+            taskItem.prepend(input); // Add input at the beginning
+            taskItem.appendChild(saveBtn); // Add save button at the end
+            input.focus(); // Automatically focus the cursor in the input box
+    
+        } else {
+            // --- SWITCH BACK TO VIEW MODE ---
+            // This part is now handled automatically by onSnapshot!
+            // When the database updates, renderTasks runs and rebuilds the
+            // task item in its original "view" state. So we don't need to write code for this.
+        }
+   
+        
         // --- EVENT LISTENERS (Corrected & Consolidated) ---
         loginBtn.addEventListener('click', () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()));
         logoutBtn.addEventListener('click', () => auth.signOut());
@@ -183,6 +223,32 @@
                     deleteCategory(categoryId);
                 }
             }
+            
+            const taskItem = e.target.closest('li'); // Find the parent task item, if any
+            if (!taskItem) return; // If the click wasn't inside a <li>, stop here
+        
+            const taskId = taskItem.dataset.taskId;
+        
+            // Handle clicking the EDIT button
+            if (e.target.classList.contains('task-edit-btn')) {
+                toggleEditMode(taskItem, true); // A new function to switch to edit mode
+            } 
+            // Handle clicking the SAVE button
+            else if (e.target.classList.contains('save-btn')) {
+                const newText = taskItem.querySelector('.edit-input').value.trim();
+                if (newText) {
+                    updateTask(categoryId, taskId, newText);
+                    // We don't need to call toggleEditMode(taskItem, false) because onSnapshot will redraw it for us!
+                }
+            }
+            // Handle deleting a task
+            else if (e.target.classList.contains('task-delete-btn')) {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    deleteTask(categoryId, taskId);
+                }
+            }
+        
+            // ... The rest of your event listener code for deleting categories can stay below
         });
 
         // --- DATABASE ACTIONS (Corrected & Expanded) ---
@@ -213,6 +279,22 @@ if (!categoryId || !user) return;
             if (!categoryId || !taskId || !user) return;
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId).delete();
         }
+
+        function updateTask(categoryId, taskId, newText) {
+        const user = auth.currentUser;
+        if (!categoryId || !taskId || !newText || !user) return;
+    
+        const taskRef = db.collection('users').doc(user.uid)
+                          .collection('categories').doc(categoryId)
+                          .collection('tasks').doc(taskId);
+        
+        taskRef.update({
+            text: newText
+        }).catch(error => {
+            console.error("Error updating task: ", error);
+        });
+        }
+            
     </script>
 </body>
 </html>
