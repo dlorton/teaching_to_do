@@ -6,7 +6,6 @@
     <title>My To-Do List</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
-        /* CSS is unchanged and correct */
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h1 { text-align: center; color: #333; }
@@ -34,7 +33,7 @@
         .edit-btn { background-color: #ffc107; }
         .save-btn { background-color: #28a745; }
         .delete-btn { background-color: #dc3545; }
-        .sortable-ghost { opacity: 0.4; background: #c8ebfb; } /* Style for the dragged item's placeholder */
+        .sortable-ghost { opacity: 0.4; background: #c8ebfb; }
     </style>
 </head>
 <body>
@@ -86,7 +85,6 @@
         function attachUserListeners(userId) {
             const categoriesCollection = db.collection('users').doc(userId).collection('categories');
             if (listeners.categories) listeners.categories();
-            // UPDATED: Order by our new 'order' field
             listeners.categories = categoriesCollection.orderBy("order", "asc").onSnapshot(snapshot => {
                 const categories = [];
                 snapshot.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
@@ -107,33 +105,93 @@
                 const categoryBlock = document.createElement('div');
                 categoryBlock.className = 'category-block';
                 categoryBlock.dataset.categoryId = category.id;
-                categoryBlock.innerHTML = `...`; // Content is the same as before
+                categoryBlock.innerHTML = `
+                    <div class="category-header">
+                        <span class="category-title">${category.name}</span>
+                        <div class="category-actions">
+                            <button class="btn edit-btn category-edit-btn">Edit</button>
+                            <button class="btn delete-btn category-delete-btn">Delete</button>
+                        </div>
+                    </div>
+                    <div class="add-task-area">
+                        <input type="text" class="new-task-input" placeholder="Add a new task...">
+                        <button class="add-task-btn">Add</button>
+                    </div>
+                    <ul class="task-list"></ul>
+                `;
                 categoriesContainer.appendChild(categoryBlock);
 
                 const taskListElement = categoryBlock.querySelector('.task-list');
                 const tasksCollection = db.collection('users').doc(userId).collection('categories').doc(category.id).collection('tasks');
                 if (listeners[category.id]) listeners[category.id]();
-                // UPDATED: Order by our new 'order' field
                 listeners[category.id] = tasksCollection.orderBy("order", "asc").onSnapshot(snapshot => {
                     const tasks = [];
                     snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
                     renderTasks(tasks, taskListElement);
                 });
             });
-            // NEW: Initialize drag-and-drop after everything is rendered
             initializeSortables();
         }
 
-        function renderTasks(tasks, taskListElement) { /* ... Same as before ... */ }
-        function toggleTaskEditMode(taskItem, isEditing) { /* ... Same as before ... */ }
-        function toggleCategoryEditMode(categoryHeader, isEditing) { /* ... Same as before ... */ }
+        function renderTasks(tasks, taskListElement) {
+            taskListElement.innerHTML = '';
+            tasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.dataset.taskId = task.id;
+                taskItem.innerHTML = `
+                    <span class="task-text">${task.text}</span>
+                    <div class="button-container">
+                        <button class="btn edit-btn task-edit-btn">Edit</button>
+                        <button class="btn delete-btn task-delete-btn">Delete</button>
+                    </div>
+                `;
+                taskListElement.appendChild(taskItem);
+            });
+        }
 
-        // NEW: Function to set up drag-and-drop
+        // --- EDIT MODE HELPERS ---
+        function toggleTaskEditMode(taskItem, isEditing) {
+            const taskTextSpan = taskItem.querySelector('.task-text');
+            const buttonContainer = taskItem.querySelector('.button-container');
+            if (isEditing) {
+                taskTextSpan.style.display = 'none';
+                buttonContainer.style.display = 'none';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = taskTextSpan.textContent;
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn save-btn task-save-btn';
+                saveBtn.textContent = 'Save';
+                taskItem.prepend(input);
+                taskItem.appendChild(saveBtn);
+                input.focus();
+            }
+        }
+
+        function toggleCategoryEditMode(categoryHeader, isEditing) {
+            const titleSpan = categoryHeader.querySelector('.category-title');
+            const actionsDiv = categoryHeader.querySelector('.category-actions');
+            if (isEditing) {
+                titleSpan.style.display = 'none';
+                actionsDiv.style.display = 'none';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = titleSpan.textContent;
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn save-btn category-save-btn';
+                saveBtn.textContent = 'Save';
+                categoryHeader.prepend(input);
+                categoryHeader.appendChild(saveBtn);
+                input.focus();
+            }
+        }
+
+        // --- DRAG-AND-DROP INITIALIZATION ---
         function initializeSortables() {
             const user = auth.currentUser;
             if (!user) return;
-
-            // Make categories sortable
             new Sortable(categoriesContainer, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
@@ -142,11 +200,9 @@
                     updateCategoryOrder(categoryElements);
                 }
             });
-
-            // Make tasks in each category sortable
             document.querySelectorAll('.task-list').forEach(taskList => {
                 new Sortable(taskList, {
-                    group: 'tasks', // Allows dragging tasks between categories in the future
+                    group: 'tasks',
                     animation: 150,
                     ghostClass: 'sortable-ghost',
                     onEnd: (evt) => {
@@ -159,22 +215,79 @@
         }
 
         // --- EVENT LISTENERS ---
-        /* ... Same click and keypress listeners as before ... */
+        loginBtn.addEventListener('click', () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()));
+        logoutBtn.addEventListener('click', () => auth.signOut());
+        addCategoryBtn.addEventListener('click', addCategory);
+        newCategoryInput.addEventListener('keypress', e => { if (e.key === 'Enter') addCategory(); });
+
+        categoriesContainer.addEventListener('click', e => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const categoryBlock = e.target.closest('.category-block');
+            if (!categoryBlock) return;
+            const categoryId = categoryBlock.dataset.categoryId;
+
+            if (e.target.classList.contains('category-edit-btn')) {
+                toggleCategoryEditMode(e.target.closest('.category-header'), true);
+            } else if (e.target.classList.contains('category-save-btn')) {
+                const newName = categoryBlock.querySelector('.edit-input').value.trim();
+                if (newName) updateCategory(categoryId, newName);
+            } else if (e.target.classList.contains('category-delete-btn')) {
+                if (confirm('Are you sure you want to delete this category and all its tasks?')) deleteCategory(categoryId);
+            } else if (e.target.classList.contains('add-task-btn')) {
+                const taskInput = categoryBlock.querySelector('.new-task-input');
+                if (taskInput.value.trim()) addTask(taskInput.value.trim(), categoryId);
+                taskInput.value = '';
+            } else {
+                const taskItem = e.target.closest('li');
+                if (!taskItem) return;
+                const taskId = taskItem.dataset.taskId;
+                if (e.target.classList.contains('task-edit-btn')) {
+                    toggleTaskEditMode(taskItem, true);
+                } else if (e.target.classList.contains('task-save-btn')) {
+                    const newText = taskItem.querySelector('.edit-input').value.trim();
+                    if (newText) updateTask(categoryId, taskId, newText);
+                } else if (e.target.classList.contains('task-delete-btn')) {
+                    if (confirm('Are you sure you want to delete this task?')) deleteTask(categoryId, taskId);
+                }
+            }
+        });
+        
+        categoriesContainer.addEventListener('keypress', e => {
+            if (e.key !== 'Enter') return;
+            const user = auth.currentUser;
+            if (!user) return;
+            const categoryBlock = e.target.closest('.category-block');
+            if (!categoryBlock) return;
+            const categoryId = categoryBlock.dataset.categoryId;
+
+            if (e.target.classList.contains('new-task-input')) {
+                const taskText = e.target.value.trim();
+                if (taskText) addTask(taskText, categoryId);
+                e.target.value = '';
+            } else if (e.target.classList.contains('edit-input')) {
+                const newText = e.target.value.trim();
+                const taskItem = e.target.closest('li');
+                if (newText) {
+                    if(taskItem) {
+                        updateTask(categoryId, taskItem.dataset.taskId, newText);
+                    } else {
+                        updateCategory(categoryId, newText);
+                    }
+                }
+            }
+        });
 
         // --- DATABASE ACTIONS ---
         function addCategory() {
             const categoryName = newCategoryInput.value.trim();
             const user = auth.currentUser;
             if (!categoryName || !user) return;
-            
             const categoriesRef = db.collection('users').doc(user.uid).collection('categories');
-            // Get the current number of categories to set the order for the new one
             categoriesRef.get().then(snapshot => {
-                const newOrder = snapshot.size;
-                // UPDATED: Add the 'order' field
                 categoriesRef.add({ 
                     name: categoryName, 
-                    order: newOrder, 
+                    order: snapshot.size, 
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 });
             });
@@ -184,48 +297,63 @@
         function addTask(taskText, categoryId) {
             const user = auth.currentUser;
             if (!taskText || !categoryId || !user) return;
-
             const tasksRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks');
             tasksRef.get().then(snapshot => {
-                const newOrder = snapshot.size;
-                // UPDATED: Add the 'order' field
                 tasksRef.add({ 
                     text: taskText, 
-                    order: newOrder,
+                    order: snapshot.size,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 });
             });
         }
 
-        /* ... deleteCategory, deleteTask, updateTask, updateCategory functions are the same ... */
+        function deleteCategory(categoryId) {
+            const user = auth.currentUser;
+            if (!categoryId || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).delete();
+        }
 
-        // NEW: Function to save the new order of categories
+        function deleteTask(categoryId, taskId) {
+            const user = auth.currentUser;
+            if (!categoryId || !taskId || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId).delete();
+        }
+
+        function updateTask(categoryId, taskId, newText) {
+            const user = auth.currentUser;
+            if (!categoryId || !taskId || !newText || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId)
+              .update({ text: newText })
+              .catch(error => console.error("Error updating task: ", error));
+        }
+        
+        function updateCategory(categoryId, newName) {
+            const user = auth.currentUser;
+            if (!categoryId || !newName || !user) return;
+            db.collection('users').doc(user.uid).collection('categories').doc(categoryId)
+              .update({ name: newName })
+              .catch(error => console.error("Error updating category: ", error));
+        }
+
         function updateCategoryOrder(categoryElements) {
             const user = auth.currentUser;
             if (!user) return;
-
-            const batch = db.batch(); // Use a batch to update all documents at once
+            const batch = db.batch();
             categoryElements.forEach((element, index) => {
-                const categoryId = element.dataset.categoryId;
-                const docRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId);
+                const docRef = db.collection('users').doc(user.uid).collection('categories').doc(element.dataset.categoryId);
                 batch.update(docRef, { order: index });
             });
-
             batch.commit().catch(err => console.error("Error updating category order", err));
         }
 
-        // NEW: Function to save the new order of tasks within a category
         function updateTaskOrder(categoryId, taskElements) {
             const user = auth.currentUser;
             if (!user || !categoryId) return;
-
             const batch = db.batch();
             taskElements.forEach((element, index) => {
-                const taskId = element.dataset.taskId;
-                const docRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId);
+                const docRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(element.dataset.taskId);
                 batch.update(docRef, { order: index });
             });
-
             batch.commit().catch(err => console.error("Error updating task order", err));
         }
     </script>
