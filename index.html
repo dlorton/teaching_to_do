@@ -23,7 +23,7 @@
         .category-title { font-size: 1.2em; font-weight: bold; }
         .category-actions .btn { font-size: 0.8em; }
         .add-task-area { display: flex; gap: 10px; margin-bottom: 15px; }
-        .new-task-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .new-task-input, .edit-input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .add-task-btn { padding: 8px 12px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; }
         .task-list { list-style-type: none; padding: 0; }
         .task-list li { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -36,7 +36,6 @@
     </style>
 </head>
 <body>
-    <!-- HTML is correct and unchanged -->
     <div class="container">
         <div id="auth-container"><h1>My To-Do List</h1><p>Please sign in to continue</p><button id="login-btn" class="google-login-btn">Sign in with Google</button></div>
         <div id="app-container" class="hidden"><div id="app-header"><h1>My To-Do List</h1><button id="logout-btn" class="logout-btn">Sign Out</button></div><div id="add-category-area"><input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)"><button id="add-category-btn">Add Category</button></div><div id="categories-container"></div></div>
@@ -47,7 +46,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     
     <script>
-        // --- CONFIG & INITIAL SETUP (Correct) ---
+        // --- CONFIG & INITIAL SETUP ---
         const firebaseConfig = {
             apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
             authDomain: "teaching-to-do-list.firebaseapp.com",
@@ -56,7 +55,7 @@
             messagingSenderId: "436829328408",
             appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
             measurementId: "G-32552MXKEK"
-          };
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -70,7 +69,7 @@
         const categoriesContainer = document.getElementById('categories-container');
         let listeners = {};
 
-        // --- AUTHENTICATION (Correct) ---
+        // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 authContainer.classList.add('hidden');
@@ -99,7 +98,7 @@
             categoriesContainer.innerHTML = '';
         }
 
-        // --- RENDERING (Improved & Corrected) ---
+        // --- RENDERING ---
         function renderCategories(categories, userId) {
             categoriesContainer.innerHTML = ''; // Clear the container
             categories.forEach(category => {
@@ -120,7 +119,7 @@
                     </div>
                     <ul class="task-list"></ul>
                 `;
-                categoriesContainer.appendChild(categoryBlock); // Use appendChild for efficiency
+                categoriesContainer.appendChild(categoryBlock);
 
                 const taskListElement = categoryBlock.querySelector('.task-list');
                 const tasksCollection = db.collection('users').doc(userId).collection('categories').doc(category.id).collection('tasks');
@@ -136,7 +135,7 @@
         function renderTasks(tasks, taskListElement, categoryId) {
             taskListElement.innerHTML = '';
             tasks.forEach(task => {
-                const taskItem = document.createElement('li'); // This line was missing!
+                const taskItem = document.createElement('li');
                 taskItem.dataset.taskId = task.id;
                 taskItem.innerHTML = `
                     <span class="task-text">${task.text}</span>
@@ -149,47 +148,37 @@
             });
         }
 
-        // --- TOGGLE EDIT BUTTON ---
+        // --- EDIT MODE HELPER ---
         function toggleEditMode(taskItem, isEditing) {
             const taskTextSpan = taskItem.querySelector('.task-text');
             const buttonContainer = taskItem.querySelector('.button-container');
 
-        // Remove any existing edit input if there is one
-        const existingInput = taskItem.querySelector('.edit-input');
-        if (existingInput) {
-            taskItem.removeChild(existingInput);
-        }
-        
-        if (isEditing) {
-            // --- SWITCH TO EDIT MODE ---
-            taskTextSpan.style.display = 'none'; // Hide the original text
-            buttonContainer.style.display = 'none'; // Hide the original buttons
-    
-            // Create an input field
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'edit-input'; // A class to find it later
-            input.value = taskTextSpan.textContent; // Pre-fill with existing text
+            const existingInput = taskItem.querySelector('.edit-input');
+            if (existingInput) {
+                taskItem.removeChild(existingInput);
+            }
             
-            // Create a save button
-            const saveBtn = document.createElement('button');
-            saveBtn.className = 'btn save-btn';
-            saveBtn.textContent = 'Save';
-    
-            // Add the new elements to the task item
-            taskItem.prepend(input); // Add input at the beginning
-            taskItem.appendChild(saveBtn); // Add save button at the end
-            input.focus(); // Automatically focus the cursor in the input box
-    
-        } else {
-            // --- SWITCH BACK TO VIEW MODE ---
-            // This part is now handled automatically by onSnapshot!
-            // When the database updates, renderTasks runs and rebuilds the
-            // task item in its original "view" state. So we don't need to write code for this.
+            if (isEditing) {
+                // Switch to Edit Mode
+                taskTextSpan.style.display = 'none';
+                buttonContainer.style.display = 'none';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = taskTextSpan.textContent;
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn save-btn';
+                saveBtn.textContent = 'Save';
+
+                taskItem.prepend(input);
+                taskItem.appendChild(saveBtn);
+                input.focus();
+            }
         }
-   
-        
-        // --- EVENT LISTENERS (Corrected & Consolidated) ---
+
+        // --- EVENT LISTENERS ---
         loginBtn.addEventListener('click', () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()));
         logoutBtn.addEventListener('click', () => auth.signOut());
         addCategoryBtn.addEventListener('click', addCategory);
@@ -198,11 +187,12 @@
         categoriesContainer.addEventListener('click', e => {
             const user = auth.currentUser;
             if (!user) return;
+
             const categoryBlock = e.target.closest('.category-block');
             if (!categoryBlock) return;
             const categoryId = categoryBlock.dataset.categoryId;
 
-            // Handle adding a task
+            // --- Action: Add a new task ---
             if (e.target.classList.contains('add-task-btn')) {
                 const taskInput = categoryBlock.querySelector('.new-task-input');
                 const taskText = taskInput.value.trim();
@@ -211,49 +201,40 @@
                     taskInput.value = '';
                 }
             }
-            // Handle deleting a task
-            if (e.target.classList.contains('task-delete-btn')) {
-                const taskItem = e.target.closest('li');
-                const taskId = taskItem.dataset.taskId;
-                if (confirm('Are you sure you want to delete this task?')) {
-                    deleteTask(categoryId, taskId);
-                }
-            }
-            // Handle deleting a category
-            if (e.target.classList.contains('category-delete-btn')) {
-                 if (confirm('Are you sure you want to delete this entire category and all its tasks? This cannot be undone.')) {
+            // --- Action: Delete a category ---
+            else if (e.target.classList.contains('category-delete-btn')) {
+                if (confirm('Are you sure you want to delete this entire category and all its tasks? This cannot be undone.')) {
                     deleteCategory(categoryId);
                 }
             }
-            
-            const taskItem = e.target.closest('li'); // Find the parent task item, if any
-            if (!taskItem) return; // If the click wasn't inside a <li>, stop here
-        
-            const taskId = taskItem.dataset.taskId;
-        
-            // Handle clicking the EDIT button
-            if (e.target.classList.contains('task-edit-btn')) {
-                toggleEditMode(taskItem, true); // A new function to switch to edit mode
-            } 
-            // Handle clicking the SAVE button
-            else if (e.target.classList.contains('save-btn')) {
-                const newText = taskItem.querySelector('.edit-input').value.trim();
-                if (newText) {
-                    updateTask(categoryId, taskId, newText);
-                    // We don't need to call toggleEditMode(taskItem, false) because onSnapshot will redraw it for us!
+            // --- Actions that happen INSIDE a task item (li) ---
+            else {
+                const taskItem = e.target.closest('li');
+                if (!taskItem) return; // If the click wasn't in a task item, we're done.
+
+                const taskId = taskItem.dataset.taskId;
+
+                // Action: Click the EDIT button
+                if (e.target.classList.contains('task-edit-btn')) {
+                    toggleEditMode(taskItem, true);
+                }
+                // Action: Click the SAVE button
+                else if (e.target.classList.contains('save-btn')) {
+                    const newText = taskItem.querySelector('.edit-input').value.trim();
+                    if (newText) {
+                        updateTask(categoryId, taskId, newText);
+                    }
+                }
+                // Action: Click the DELETE button on a task
+                else if (e.target.classList.contains('task-delete-btn')) {
+                    if (confirm('Are you sure you want to delete this task?')) {
+                        deleteTask(categoryId, taskId);
+                    }
                 }
             }
-            // Handle deleting a task
-            else if (e.target.classList.contains('task-delete-btn')) {
-                if (confirm('Are you sure you want to delete this task?')) {
-                    deleteTask(categoryId, taskId);
-                }
-            }
-        
-            // ... The rest of your event listener code for deleting categories can stay below
         });
 
-        // --- DATABASE ACTIONS (Corrected & Expanded) ---
+        // --- DATABASE ACTIONS ---
         function addCategory() {
             const categoryName = newCategoryInput.value.trim();
             const user = auth.currentUser;
@@ -270,10 +251,8 @@
 
         function deleteCategory(categoryId) {
             const user = auth.currentUser;
-if (!categoryId || !user) return;
+            if (!categoryId || !user) return;
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).delete();
-            // Note: Deleting a document does NOT delete its subcollections in the client SDK. 
-            // The tasks will become "orphaned" but inaccessible. For a production app, this would be handled with a Cloud Function.
         }
 
         function deleteTask(categoryId, taskId) {
@@ -283,20 +262,19 @@ if (!categoryId || !user) return;
         }
 
         function updateTask(categoryId, taskId, newText) {
-        const user = auth.currentUser;
-        if (!categoryId || !taskId || !newText || !user) return;
-    
-        const taskRef = db.collection('users').doc(user.uid)
-                          .collection('categories').doc(categoryId)
-                          .collection('tasks').doc(taskId);
+            const user = auth.currentUser;
+            if (!categoryId || !taskId || !newText || !user) return;
         
-        taskRef.update({
-            text: newText
-        }).catch(error => {
-            console.error("Error updating task: ", error);
-        });
-        }
+            const taskRef = db.collection('users').doc(user.uid)
+                              .collection('categories').doc(categoryId)
+                              .collection('tasks').doc(taskId);
             
+            taskRef.update({
+                text: newText
+            }).catch(error => {
+                console.error("Error updating task: ", error);
+            });
+        }
     </script>
 </body>
 </html>
