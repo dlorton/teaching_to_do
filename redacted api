@@ -49,13 +49,12 @@
     <script>
         // --- CONFIG & INITIAL SETUP (Correct) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBb0S_7U8FPaoUgjYpt_TlaAnJTBqNdvIE",
-            authDomain: "teaching-to-do-list.firebaseapp.com",
-            projectId: "teaching-to-do-list",
-            storageBucket: "teaching-to-do-list.firebasestorage.app",
-            messagingSenderId: "436829328408",
-            appId: "1:436829328408:web:6cc89bf82f9610c2689f6d",
-            measurementId: "G-32552MXKEK"
+          apiKey: "YOUR_API_KEY",
+          authDomain: "YOUR_AUTH_DOMAIN",
+          projectId: "YOUR_PROJECT_ID",
+          storageBucket: "YOUR_STORAGE_BUCKET",
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+          appId: "YOUR_APP_ID"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
