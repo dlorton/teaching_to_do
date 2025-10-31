@@ -49,7 +49,7 @@
                     <button id="logout-btn" class="logout-btn">Sign Out</button>
                 </div>
             </div>
-            <div id="add-category-area"><input type="text" id="new-category-input" placeholder="Create a new category (e.g., Math 7)"><button id="add-category-btn">Add Category</button></div>
+            <div id="add-category-area"><input type="text" id="new-category-input" placeholder="Create a new category..."><button id="add-category-btn">Add Category</button></div>
             <div id="categories-container"></div>
         </div>
     </div>
@@ -68,7 +68,8 @@
           messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
           appId: "YOUR_APP_ID"
         };
-                firebase.initializeApp(firebaseConfig);
+
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const authContainer = document.getElementById('auth-container');
@@ -82,20 +83,16 @@
         let categorySortableInstance = null;
 
         // --- AUTHENTICATION ---
-        // NEW: Function to handle the result of a redirect sign-in
         function handleRedirectSignIn() {
             auth.getRedirectResult()
                 .then((result) => {
-                    if (result.user) {
-                        console.log("Signed in via redirect!", result.user);
-                    }
+                    if (result.user) console.log("Signed in via redirect!", result.user);
                 }).catch((error) => {
                     console.error("Error during redirect sign-in:", error);
-                    // Show login UI again if there's an error
                     authContainer.innerHTML = '<h1>My To-Do List</h1><p>An error occurred. Please try again.</p><button id="login-btn" class="google-login-btn">Sign in with Google</button>';
                 });
         }
-        handleRedirectSignIn(); // Call this when the app loads
+        handleRedirectSignIn();
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -138,8 +135,35 @@
             categories.forEach(category => {
                 const categoryBlock = document.createElement('div');
                 categoryBlock.className = 'category-block';
+                categoryBlock.dataset.categoryId = category.id;
+                categoryBlock.innerHTML = `
+                    <div class="category-header">
+                        <span class="category-title">${category.name}</span>
+                        <div class="category-actions">
+                            <button class="btn edit-btn category-edit-btn">Edit</button>
+                            <button class="btn delete-btn category-delete-btn">Delete</button>
+                        </div>
+                    </div>
+                    <div class="add-task-area">
+                        <input type="text" class="new-task-input" placeholder="Add a new task...">
+                        <button class="add-task-btn">Add</button>
+                    </div>
+                    <ul class="task-list"></ul>
+                `;
+                categoriesContainer.appendChild(categoryBlock);
+
+                const taskListElement = categoryBlock.querySelector('.task-list');
+                const tasksCollection = db.collection('users').doc(userId).collection('categories').doc(category.id).collection('tasks');
+                if (listeners[category.id]) listeners[category.id]();
+                listeners[category.id] = tasksCollection.orderBy("order", "asc").onSnapshot(snapshot => {
+                    const tasks = [];
+                    snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+                    renderTasks(tasks, taskListElement);
+                });
+            });
             initializeSortables();
         }
+
         function renderTasks(tasks, taskListElement) {
             taskListElement.innerHTML = '';
             tasks.forEach(task => {
@@ -175,7 +199,7 @@
                 input.focus();
             }
         }
-            
+        
         function toggleCategoryEditMode(categoryHeader, isEditing) {
             const titleSpan = categoryHeader.querySelector('.category-title');
             const actionsDiv = categoryHeader.querySelector('.category-actions');
@@ -199,20 +223,21 @@
         function initializeSortables() {
             const user = auth.currentUser;
             if (!user) return;
-            new Sortable(categoriesContainer, {
             
             if (categorySortableInstance) {
                 categorySortableInstance.destroy();
             }
+
             categorySortableInstance = new Sortable(categoriesContainer, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
-                disabled: true, // Start disabled
+                disabled: true, 
                 onEnd: (evt) => {
                     const categoryElements = [...categoriesContainer.children];
                     updateCategoryOrder(categoryElements);
                 }
             });
+
             document.querySelectorAll('.task-list').forEach(taskList => {
                 new Sortable(taskList, {
                     group: 'tasks',
@@ -224,21 +249,38 @@
                         updateTaskOrder(categoryId, taskElements);
                     }
                 });
-                new Sortable(taskList, { /* ... same as before ... */ });
             });
         }
 
         // --- EVENT LISTENERS ---
-        // UPDATED: Use signInWithRedirect
         loginBtn.addEventListener('click', () => {
             authContainer.innerHTML = '<h1>Signing in...</h1>';
             auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
         });
+
         logoutBtn.addEventListener('click', () => auth.signOut());
         addCategoryBtn.addEventListener('click', addCategory);
         newCategoryInput.addEventListener('keypress', e => { if (e.key === 'Enter') addCategory(); });
+
         document.getElementById('toggle-reorder-btn').addEventListener('click', () => {
             if (!categorySortableInstance) return;
+            const isDisabled = categorySortableInstance.option('disabled');
+            categorySortableInstance.option('disabled', !isDisabled);
+
+            appContainer.classList.toggle('reordering-active');
+            const btn = document.getElementById('toggle-reorder-btn');
+            btn.textContent = !isDisabled ? 'Done Reordering' : 'Reorder Categories';
+            btn.style.backgroundColor = !isDisabled ? '#28a745' : '#ffc107';
+        });
+
+        // FIXED: These two listeners are now separate and not nested
+        categoriesContainer.addEventListener('click', e => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const categoryBlock = e.target.closest('.category-block');
+            if (!categoryBlock) return;
+            const categoryId = categoryBlock.dataset.categoryId;
+
             if (e.target.classList.contains('category-edit-btn')) {
                 toggleCategoryEditMode(e.target.closest('.category-header'), true);
             } else if (e.target.classList.contains('category-save-btn')) {
@@ -264,12 +306,7 @@
                 }
             }
         });
-        categoriesContainer.addEventListener('click', e => {
-            const user = auth.currentUser;
-            if (!user) return;
-            const categoryBlock = e.target.closest('.category-block');
-            if (!categoryBlock) return;
-            const categoryId = categoryBlock.dataset.categoryId;
+        
         categoriesContainer.addEventListener('keypress', e => {
             if (e.key !== 'Enter') return;
             const user = auth.currentUser;
@@ -277,8 +314,7 @@
             const categoryBlock = e.target.closest('.category-block');
             if (!categoryBlock) return;
             const categoryId = categoryBlock.dataset.categoryId;
-            const isDisabled = categorySortableInstance.option('disabled');
-            categorySortableInstance.option('disabled', !isDisabled);
+
             if (e.target.classList.contains('new-task-input')) {
                 const taskText = e.target.value.trim();
                 if (taskText) addTask(taskText, categoryId);
@@ -294,6 +330,7 @@
                     }
                 }
             }
+        });
 
         // --- DATABASE ACTIONS ---
         function addCategory() {
@@ -310,6 +347,7 @@
             });
             newCategoryInput.value = '';
         }
+
         function addTask(taskText, categoryId) {
             const user = auth.currentUser;
             if (!taskText || !categoryId || !user) return;
@@ -322,16 +360,19 @@
                 });
             });
         }
+
         function deleteCategory(categoryId) {
             const user = auth.currentUser;
             if (!categoryId || !user) return;
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).delete();
         }
+
         function deleteTask(categoryId, taskId) {
             const user = auth.currentUser;
             if (!categoryId || !taskId || !user) return;
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId).delete();
         }
+
         function updateTask(categoryId, taskId, newText) {
             const user = auth.currentUser;
             if (!categoryId || !taskId || !newText || !user) return;
@@ -339,6 +380,7 @@
               .update({ text: newText })
               .catch(error => console.error("Error updating task: ", error));
         }
+        
         function updateCategory(categoryId, newName) {
             const user = auth.currentUser;
             if (!categoryId || !newName || !user) return;
@@ -346,6 +388,7 @@
               .update({ name: newName })
               .catch(error => console.error("Error updating category: ", error));
         }
+
         function updateCategoryOrder(categoryElements) {
             const user = auth.currentUser;
             if (!user) return;
@@ -356,6 +399,7 @@
             });
             batch.commit().catch(err => console.error("Error updating category order", err));
         }
+
         function updateTaskOrder(categoryId, taskElements) {
             const user = auth.currentUser;
             if (!user || !categoryId) return;
