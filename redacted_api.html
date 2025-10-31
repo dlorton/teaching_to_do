@@ -68,13 +68,12 @@
           messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
           appId: "YOUR_APP_ID"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
-        const loginBtn = document.getElementById('login-btn');
+        // REMOVED: const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const newCategoryInput = document.getElementById('new-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
@@ -253,9 +252,12 @@
         }
 
         // --- EVENT LISTENERS ---
-        loginBtn.addEventListener('click', () => {
-            authContainer.innerHTML = '<h1>Signing in...</h1>';
-            auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+        // NEW: Using event delegation for the login button
+        document.body.addEventListener('click', e => {
+            if (e.target.id === 'login-btn') {
+                authContainer.innerHTML = '<h1>Signing in...</h1>';
+                auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+            }
         });
 
         logoutBtn.addEventListener('click', () => auth.signOut());
@@ -272,8 +274,7 @@
             btn.textContent = !isDisabled ? 'Done Reordering' : 'Reorder Categories';
             btn.style.backgroundColor = !isDisabled ? '#28a745' : '#ffc107';
         });
-
-        // FIXED: These two listeners are now separate and not nested
+        
         categoriesContainer.addEventListener('click', e => {
             const user = auth.currentUser;
             if (!user) return;
