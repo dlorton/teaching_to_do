@@ -207,7 +207,7 @@
                     </div>
                     <div class="add-task-area">
                         <input type="text" class="new-task-input" placeholder="Add a new task...">
-                        <input type="date" class="task-due-date-input">
+                        <input type="date" class="task-due-date-input" title="Optional: Set a due date for this task">
                         <button class="btn add-task-btn">Add</button>
                     </div>
                     <ul class="task-list"></ul>
@@ -231,6 +231,13 @@
             tasks.forEach(task => {
                 const taskItem = document.createElement('li');
                 taskItem.dataset.taskId = task.id;
+                
+                // Store due date for editing (in YYYY-MM-DD format for date input)
+                if (task.dueDate) {
+                    const dueDateObj = task.dueDate.toDate();
+                    taskItem.dataset.dueDate = dueDateObj.toISOString().split('T')[0];
+                }
+                
                 if (task.isComplete) {
                     taskItem.classList.add('completed');
                 }
@@ -299,14 +306,27 @@
         function toggleTaskEditMode(taskItem, isEditing) {
             const taskTextSpan = taskItem.querySelector('.task-text');
             const buttonContainer = taskItem.querySelector('.button-container');
+            
             if (isEditing) {
                 taskTextSpan.style.display = 'none';
                 buttonContainer.style.display = 'none';
 
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'edit-input';
-                input.value = taskTextSpan.textContent;
+                // Text input
+                const textInput = document.createElement('input');
+                textInput.type = 'text';
+                textInput.className = 'edit-input';
+                textInput.value = taskTextSpan.textContent;
+                
+                // Date input (NEW!)
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.className = 'edit-input task-due-date-edit';
+                dateInput.title = 'Due date (leave empty to remove deadline)';
+                
+                // Pre-fill with existing due date (if any)
+                if (taskItem.dataset.dueDate) {
+                    dateInput.value = taskItem.dataset.dueDate;
+                }
                 
                 const saveBtn = document.createElement('button');
                 saveBtn.className = 'btn save-btn task-save-btn';
@@ -316,16 +336,20 @@
                 cancelBtn.className = 'btn edit-btn task-cancel-btn';
                 cancelBtn.textContent = 'Cancel';
                 
-                taskItem.prepend(input);
+                taskItem.prepend(textInput);
+                taskItem.appendChild(dateInput);
                 taskItem.appendChild(saveBtn);
                 taskItem.appendChild(cancelBtn);
-                input.focus();
+                textInput.focus();
             } else {
-                const input = taskItem.querySelector('.edit-input');
+                // Exit edit mode - cleanup
+                const textInput = taskItem.querySelector('.edit-input');
+                const dateInput = taskItem.querySelector('.task-due-date-edit');
                 const saveBtn = taskItem.querySelector('.task-save-btn');
                 const cancelBtn = taskItem.querySelector('.task-cancel-btn');
                 
-                if (input) input.remove();
+                if (textInput) textInput.remove();
+                if (dateInput) dateInput.remove();
                 if (saveBtn) saveBtn.remove();
                 if (cancelBtn) cancelBtn.remove();
 
@@ -484,8 +508,9 @@
                     toggleTaskEditMode(taskItem, true);
                 } else if (e.target.classList.contains('task-save-btn')) {
                     const newText = taskItem.querySelector('.edit-input').value.trim();
+                    const newDueDate = taskItem.querySelector('.task-due-date-edit').value;
                     if (newText) {
-                        updateTask(categoryId, taskId, newText);
+                        updateTask(categoryId, taskId, newText, newDueDate);
                         toggleTaskEditMode(taskItem, false);
                     }
                 } else if (e.target.classList.contains('task-cancel-btn')) {
@@ -598,11 +623,21 @@
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId).delete();
         }
 
-        function updateTask(categoryId, taskId, newText) {
+        function updateTask(categoryId, taskId, newText, newDueDate) {
             const user = auth.currentUser;
-            if (!categoryId || !taskId || !newText || !user) return;
+            if (!categoryId || !taskId || !user) return;
+            
+            const updateData = { text: newText };
+            
+            // Handle due date changes
+            if (newDueDate === '') {
+                updateData.dueDate = null; // Remove deadline if empty
+            } else if (newDueDate !== undefined) {
+                updateData.dueDate = new Date(newDueDate); // Update deadline
+            }
+            
             db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId)
-              .update({ text: newText })
+              .update(updateData)
               .catch(error => console.error("Error updating task: ", error));
         }
         
