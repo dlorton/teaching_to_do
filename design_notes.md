@@ -7,7 +7,139 @@
 
 ## 🎨 UI/UX Concerns
 
-### **Issue #1: Button Clutter** ⚠️ *High Priority*
+### **Issue #1: Navigation Menu for Multiple Tools** 🆕 *High Priority*
+**Status:** Not yet implemented  
+**Severity:** High (required for Phase 1)  
+**Date Added:** November 2, 2025
+
+**Current State:**
+- Single-page app with only todo list functionality
+- No navigation structure
+
+**Problem:**
+As we add Phase 1 features (Google Calendar, Supply Tracker, Resource Database, Lesson Planner), users need a way to navigate between tools.
+
+**Requirements:**
+- **Overarching menu system** to switch between:
+  - 📋 Todo List (current page)
+  - 📅 Calendar (Phase 1)
+  - 🛒 Supply Tracker (Phase 1)
+  - 📚 Resource Database (Phase 1)
+  - 📖 Lesson Planner (Phase 1)
+  - ⚙️ Settings (future)
+
+**Proposed Solutions:**
+
+#### **Option A: Side Navigation (Sidebar)** ⭐ *Recommended*
+Left-side navigation panel with icons and labels
+- **Pros:** Common pattern, easy to understand, always visible
+- **Cons:** Takes horizontal space on small screens
+- **Examples:** Gmail, Notion, Todoist
+- **Mobile behavior:** Collapsible hamburger menu
+
+#### **Option B: Top Navigation Bar**
+Horizontal menu at the top with tabs/buttons
+- **Pros:** Familiar pattern, good for desktop
+- **Cons:** Limited space for many tools, scrolls away on mobile
+- **Examples:** Google Calendar, Trello
+
+#### **Option C: Bottom Navigation (Mobile-First)**
+Bottom navigation bar (iOS/Android style)
+- **Pros:** Thumb-friendly on mobile
+- **Cons:** Unusual for desktop web apps
+- **Examples:** Instagram, TikTok (mobile apps)
+
+#### **Option D: Command Palette**
+Keyboard shortcut to open tool switcher (Cmd/Ctrl + K)
+- **Pros:** Power user friendly, no UI space needed
+- **Cons:** Not discoverable for new users
+- **Examples:** VS Code, Linear
+- **Use as:** Secondary navigation, not primary
+
+**Recommendation:**
+- **Primary:** Option A (Sidebar) - collapsible on mobile
+- **Secondary:** Option D (Command Palette) - for power users
+- **Implementation:** Phase 1, before adding second tool
+
+**Design Considerations:**
+```html
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h2>Teacher Companion</h2>
+  </div>
+  <ul class="nav-menu">
+    <li class="nav-item active">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Todo List</span>
+    </li>
+    <li class="nav-item">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Calendar</span>
+    </li>
+    <!-- More items... -->
+  </ul>
+  <div class="sidebar-footer">
+    <div class="user-info">[User profile]</div>
+  </div>
+</nav>
+```
+
+---
+
+### **Issue #2: Calendar-Todo Integration** 🆕 *High Priority*
+**Status:** Planning phase  
+**Date Added:** November 2, 2025
+
+**Goal:**
+Seamless bi-directional integration between todo list and calendar.
+
+**Required Features:**
+
+#### **Todo → Calendar:**
+1. **Create calendar events from tasks**
+   - Button: "Add to Calendar" on tasks with deadlines
+   - Auto-create all-day event on due date
+   - Or: Time-block tasks (choose time slot)
+
+2. **Task deadlines sync to calendar**
+   - Tasks with due dates appear as calendar events
+   - Option: Show as all-day events or reminders
+
+3. **Completed tasks update calendar**
+   - Mark calendar event as done when task is completed
+   - Or: Remove event, or add "✓" to title
+
+#### **Calendar → Todo:**
+1. **Create tasks from calendar events**
+   - Button: "Create task" on calendar events
+   - Or: Auto-create tasks for events tagged "todo"
+
+2. **Show today's calendar events in todo list**
+   - "Today's Schedule" section at top of todo list
+   - Shows upcoming events (read-only)
+
+3. **Deadline reminders based on calendar**
+   - If calendar event approaching, highlight related task
+
+**User Preferences to Consider:**
+- Auto-sync on/off toggle
+- Which calendar to sync with (if user has multiple)
+- Event types to sync (all events vs. only specific ones)
+
+**Technical Implementation Notes:**
+- Google Calendar API supports event CRUD operations
+- Use event `description` field to store task ID for linking
+- Consider using event `extendedProperties` for metadata
+- Real-time sync: Calendar webhooks + Firestore triggers
+
+**Phase 1 Minimum Viable Integration:**
+- Manual "Add to Calendar" button on tasks
+- Display today's calendar events in sidebar widget
+- Full auto-sync in Phase 2
+
+---
+
+### **Issue #3: Button Clutter** ⚠️ *High Priority*
 **Status:** Identified, not yet addressed  
 **Severity:** Medium (will worsen as features grow)
 
@@ -110,7 +242,43 @@ Consider adding a small label above or icon next to the date input:
 
 ---
 
-### **Issue #3: Edit Mode Clarity**
+### **Issue #3: Category Visual Distinction** ✅ *Implemented*
+**Status:** Completed  
+**Date Fixed:** November 2, 2025
+
+**Original Request:**
+Make categories visually distinct with alternating backgrounds for better UI aesthetics.
+
+**Solution Implemented:**
+Added alternating background colors to categories:
+- Even categories: `#1E1E1E` (default `--bg-secondary`)
+- Odd categories: `#252525` (slightly lighter)
+
+**CSS Added:**
+```css
+.category-block.alternate { 
+    background: #252525; /* Slightly lighter than bg-secondary */
+}
+```
+
+**JavaScript Logic:**
+```javascript
+categories.forEach((category, index) => {
+    const categoryBlock = document.createElement('div');
+    categoryBlock.className = 'category-block';
+    if (index % 2 === 1) {
+        categoryBlock.classList.add('alternate');
+    }
+    // ...
+});
+```
+
+**Result:**
+Subtle visual separation between categories without being too pronounced. Creates a more polished, organized appearance.
+
+---
+
+### **Issue #4: Edit Mode Clarity**
 **Status:** Working, could be improved  
 **Severity:** Low
 
@@ -400,3 +568,10 @@ Random feature ideas to explore later:
   - Added date input clarity improvement
   - Listed technical debt items
   - Created feature prioritization framework
+
+- **v1.1** - November 2, 2025 - Evening update
+  - ✅ Added Issue #1: Navigation menu requirement for multi-tool app
+  - ✅ Added Issue #2: Calendar-Todo integration specifications
+  - ✅ Documented Issue #3: Alternating category backgrounds (implemented)
+  - Reorganized issue numbering
+  - Added sidebar navigation mockup and recommendations

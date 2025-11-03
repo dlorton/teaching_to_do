@@ -58,24 +58,47 @@
 **Timeline:** December 2025 - May 2026  
 **Goal:** Add 5 essential teaching tools
 
-#### 1.1 Google Calendar Integration
+**PREREQUISITE: Navigation System**
+Before implementing multiple tools, create overarching navigation menu:
+- Sidebar navigation with icons (📋 Todo, 📅 Calendar, 🛒 Supplies, etc.)
+- Collapsible on mobile (hamburger menu)
+- Active tool highlighting
+- User profile section in sidebar footer
+- See: design_notes.md Issue #1 for detailed specs
+
+---
+
+#### 1.1 Google Calendar Integration ⭐ *Next Priority*
 **Why:** Teachers need to see all events (classes, meetings, PD) in one place  
 **Features:**
 - OAuth integration with Google Calendar API
 - Display upcoming events in dashboard
 - Create/edit calendar events from app
 - Color-coding by event type
+- **🔗 Bi-directional sync with Todo List:**
+  - Create calendar events from tasks with deadlines
+  - Show today's calendar events in todo list sidebar
+  - Link tasks to calendar events
+  - Optional auto-sync toggle
 
 **Tech Stack:**
 - Google Calendar API v3
 - OAuth 2.0 flow (already have Google Sign-In)
 - Firestore cache for offline access
 
+**Integration with Todo List:**
+See design_notes.md Issue #2 for complete calendar-todo integration specifications:
+- Manual "Add to Calendar" button on tasks (Phase 1)
+- Display today's events in sidebar widget (Phase 1)
+- Full auto-sync in Phase 2
+- Task completion updates calendar events
+
 **Learning Topics:**
 - REST APIs and HTTP requests
 - OAuth 2.0 authentication flow
 - API rate limiting and quotas
 - Async/await patterns
+- Data synchronization patterns
 
 ---
 

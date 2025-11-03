@@ -87,6 +87,7 @@
         /* --- CATEGORIES & TASKS --- */
         #categories-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; justify-content: center; }
         .category-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; flex: 1 1 300px; max-width: 100%; transition: border-color 0.2s ease-in-out; }
+        .category-block.alternate { background: #252525; } /* Slightly lighter than bg-secondary (#1E1E1E) */
         .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .category-title { font-size: 1.2em; font-weight: bold; }
         
@@ -193,9 +194,13 @@
                 reorderBtn.style.color = '';
             }
 
-            categories.forEach(category => {
+            categories.forEach((category, index) => {
                 const categoryBlock = document.createElement('div');
                 categoryBlock.className = 'category-block';
+                // Alternating background colors
+                if (index % 2 === 1) {
+                    categoryBlock.classList.add('alternate');
+                }
                 categoryBlock.dataset.categoryId = category.id;
                 categoryBlock.innerHTML = `
                     <div class="category-header">
