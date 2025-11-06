@@ -54,17 +54,36 @@
 
 ---
 
-### **Phase 1: Core Teacher Features** 📅 *Planned*
-**Timeline:** December 2025 - May 2026  
+### **Phase 1: Core Teacher Features** 📅 *In Progress*
+**Timeline:** November 2025 - May 2026  
 **Goal:** Add 5 essential teaching tools
 
-**PREREQUISITE: Navigation System**
+**PREREQUISITE: Navigation System** 🚧 *Current Task*
 Before implementing multiple tools, create overarching navigation menu:
-- Sidebar navigation with icons (📋 Todo, 📅 Calendar, 🛒 Supplies, etc.)
-- Collapsible on mobile (hamburger menu)
+- **Desktop:** Sidebar navigation with icons (📋 Todo, 📅 Calendar, 🛒 Supplies, etc.) - always visible
+- **Mobile:** Collapsible hamburger menu - gesture-friendly to avoid drag-drop conflicts
 - Active tool highlighting
 - User profile section in sidebar footer
+- **Decision:** Option A (Sidebar) - approved November 5, 2025
 - See: design_notes.md Issue #1 for detailed specs
+
+**Mobile Strategy - Unique UX Patterns:**
+Based on Android testing feedback (Nov 5, 2025), mobile version will diverge from desktop:
+- **Drag-and-drop:** Disabled on mobile due to scrolling conflicts
+  - Alternative: Long-press to activate "reorder mode" with up/down arrows
+  - Or: Separate "Reorder" view with handle icons
+- **Button controls:** Hover-reveal doesn't work on touch devices
+  - Alternative: Swipe actions (swipe left = delete, swipe right = edit)
+  - Or: Long-press context menu
+- **Navigation:** Collapsible sidebar vs. bottom navigation bar (TBD)
+  - Test collapsible sidebar first
+  - If too cluttered, switch to bottom nav (iOS/Android pattern)
+
+**Progressive Mobile Enhancement Timeline:**
+1. **Phase 1:** Desktop-first with responsive layout
+2. **Phase 1.5:** Mobile-specific interaction patterns (swipe, long-press)
+3. **Phase 2:** Convert to PWA with offline support
+4. **Phase 3:** Consider native app if PWA limitations emerge
 
 ---
 
@@ -254,7 +273,32 @@ lessonPlans: {
 **Timeline:** June 2026 - December 2026  
 **Goal:** Professional polish, mobile-optimized experience
 
-**Features:**
+**Mobile-Specific Features (High Priority):**
+Based on Android testing feedback (Nov 5, 2025):
+
+1. **Touch-Optimized Interactions**
+   - Swipe actions for task management (left = delete, right = edit)
+   - Long-press context menu as alternative to hover controls
+   - Large touch targets (min 44x44px)
+   - Bottom sheet modals instead of inline editing on mobile
+
+2. **Drag-and-Drop Alternatives**
+   - "Reorder Mode" with drag handles and visual feedback
+   - Up/down arrow buttons for fine control
+   - Disable automatic drag on touch (prevents scroll conflicts)
+
+3. **Navigation Optimization**
+   - Test collapsible sidebar vs. bottom navigation bar
+   - Gesture navigation (swipe from edge to open menu)
+   - Persistent quick-add FAB (Floating Action Button) on mobile
+
+**Desktop-Specific Features:**
+1. **Hover-Reveal Controls** ✅ *Approved Nov 5, 2025*
+   - Hide task buttons by default
+   - Show on hover for clean interface
+   - Keyboard shortcuts for power users
+
+**Cross-Platform Features:**
 - Progressive Web App (PWA) conversion
   - Offline functionality with Service Workers
   - "Add to Home Screen" on mobile

@@ -102,13 +102,289 @@
         .task-due-date.due-today { color: var(--accent-warning); }
         li.completed .task-text, li.completed .task-timestamp, li.completed .task-due-date { text-decoration: line-through; opacity: 0.5; }
 
+        /* --- SUBTASKS --- */
+        .subtask-list { list-style-type: none; padding: 0; margin: 8px 0 0 30px; }
+        .subtask-list li { background: rgba(18, 18, 18, 0.6); border: 1px solid #2a2a2a; border-radius: 4px; margin-top: 6px; padding: 8px 10px; font-size: 0.9em; display: flex; align-items: center; gap: 10px; }
+        .subtask-content { flex-grow: 1; display: flex; flex-direction: column; }
+        .subtask-text { cursor: text; font-size: 0.95em; }
+        .subtask-text.completed { text-decoration: line-through; opacity: 0.5; }
+        .add-subtask-area { display: flex; gap: 6px; margin: 8px 0 0 30px; }
+        .add-subtask-input { flex-grow: 1; padding: 6px 8px; font-size: 0.85em; background-color: rgba(18, 18, 18, 0.6); border: 1px solid #2a2a2a; color: var(--text-primary); border-radius: 6px; }
+        .add-subtask-btn { padding: 6px 12px; font-size: 0.85em; }
+        .toggle-subtasks-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; font-size: 0.9em; margin-left: 8px; }
+        .toggle-subtasks-btn:hover { color: var(--accent-primary); }
+        .subtask-list.collapsed { display: none; }
+        .subtask-checkbox { margin-right: 4px; }
+        .subtask-delete-btn { padding: 6px 8px; font-size: 0.8em; }
+
         /* --- DRAG & DROP --- */
         .reordering-active .category-block { cursor: grab; border: 1px solid var(--accent-primary); }
         .task-list li { cursor: grab; }
         .sortable-ghost { opacity: 0.4; background: #333; }
+
+        /* --- LAYOUT: SIDEBAR + MAIN CONTENT --- */
+        body {
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Sidebar Header */
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 1.2em;
+            margin: 0;
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+            display: none;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            color: var(--text-secondary);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover:not(.disabled) {
+            background: rgba(77, 182, 172, 0.1);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(77, 182, 172, 0.15);
+            color: var(--accent-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .nav-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .nav-icon {
+            font-size: 1.3em;
+            margin-right: 12px;
+            min-width: 24px;
+        }
+
+        .nav-label {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+
+        .coming-soon {
+            font-size: 0.7em;
+            background: var(--border-color);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--text-secondary);
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9em;
+        }
+
+        .user-email {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Tool Sections */
+        .tool-section {
+            display: none;
+        }
+
+        .tool-section.active {
+            display: block;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: block;
+            }
+            
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            /* Backdrop for mobile menu */
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+
+            .sidebar-backdrop.active {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="app-title">Teacher Companion</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle menu">☰</button>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item active" data-tool="todo">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Todo List</span>
+            </li>
+            <li class="nav-item disabled" data-tool="calendar">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Calendar</span>
+                <span class="coming-soon">Soon</span>
+            </li>
+            <li class="nav-item disabled" data-tool="supplies">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">Supplies</span>
+                <span class="coming-soon">Soon</span>
+            </li>
+            <li class="nav-item disabled" data-tool="resources">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Resources</span>
+                <span class="coming-soon">Soon</span>
+            </li>
+            <li class="nav-item disabled" data-tool="lessons">
+                <span class="nav-icon">📖</span>
+                <span class="nav-label">Lessons</span>
+                <span class="coming-soon">Soon</span>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <div class="user-name" id="user-name">Loading...</div>
+                    <div class="user-email" id="user-email"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Backdrop for mobile -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Todo List Section -->
+        <div id="todo-section" class="tool-section active">
     <div class="container">
         <div id="auth-container"><h1>My To-Do List</h1><p>Please sign in to continue</p><button id="login-btn" class="google-login-btn">Sign in with Google</button></div>
         <div id="app-container" class="hidden">
@@ -124,6 +400,40 @@
             <div id="categories-container"></div>
         </div>
     </div>
+        </div>
+        
+        <!-- Calendar Section (Coming Soon) -->
+        <div id="calendar-section" class="tool-section">
+            <div class="container">
+                <h1>📅 Calendar Integration</h1>
+                <p>Coming soon! Sync your tasks with Google Calendar.</p>
+            </div>
+        </div>
+
+        <!-- Supplies Section (Coming Soon) -->
+        <div id="supplies-section" class="tool-section">
+            <div class="container">
+                <h1>🛒 Supply Tracker</h1>
+                <p>Coming soon! Track classroom supplies and shopping lists.</p>
+            </div>
+        </div>
+
+        <!-- Resources Section (Coming Soon) -->
+        <div id="resources-section" class="tool-section">
+            <div class="container">
+                <h1>📚 Resource Database</h1>
+                <p>Coming soon! Organize teaching resources and materials.</p>
+            </div>
+        </div>
+
+        <!-- Lessons Section (Coming Soon) -->
+        <div id="lessons-section" class="tool-section">
+            <div class="container">
+                <h1>📖 Lesson Planner</h1>
+                <p>Coming soon! Plan and organize your lessons.</p>
+            </div>
+        </div>
+    </main>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
@@ -151,6 +461,61 @@
         const categoriesContainer = document.getElementById('categories-container');
         let listeners = {};
         let categorySortableInstance = null;
+        
+        // Navigation elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+        const navItems = document.querySelectorAll('.nav-item:not(.disabled)');
+        
+        // --- NAVIGATION CONTROLS ---
+        
+        // Sidebar toggle for mobile
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarBackdrop.classList.toggle('active');
+        });
+        
+        // Close sidebar when clicking backdrop
+        sidebarBackdrop.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('active');
+        });
+        
+        // Switch between tools
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const toolName = item.dataset.tool;
+                
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Switch tool section
+                switchTool(toolName);
+                
+                // Close sidebar on mobile after selection
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                    sidebarBackdrop.classList.remove('active');
+                }
+            });
+        });
+        
+        function switchTool(toolName) {
+            // Hide all tool sections
+            document.querySelectorAll('.tool-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected tool section
+            const targetSection = document.getElementById(`${toolName}-section`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+        }
+        
+        // --- END NAVIGATION CONTROLS ---
 
         // --- AUTHENTICATION ---
         
@@ -158,11 +523,23 @@
             if (user) {
                 authContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
+                
+                // Update user profile in sidebar
+                const userName = document.getElementById('user-name');
+                const userEmail = document.getElementById('user-email');
+                userName.textContent = user.displayName || 'User';
+                userEmail.textContent = user.email || '';
+                
                 loadUserTitle(user.uid);
                 attachUserListeners(user.uid);
             } else {
                 authContainer.classList.remove('hidden');
                 appContainer.classList.add('hidden');
+                
+                // Reset user profile
+                document.getElementById('user-name').textContent = 'Loading...';
+                document.getElementById('user-email').textContent = '';
+                
                 cleanupListeners();
             }
         });
@@ -250,6 +627,10 @@
                 const formattedDate = task.dueDate ? formatDate(task.dueDate.toDate()) : '';
                 const dateClass = task.dueDate ? getDateClass(task.dueDate.toDate()) : '';
                 const formattedTimestamp = task.createdAt ? formatTimestamp(task.createdAt) : '';
+                
+                // Count subtasks
+                const subtaskCount = task.subtasks ? task.subtasks.length : 0;
+                const subtaskLabel = subtaskCount > 0 ? `(${subtaskCount})` : '';
 
                 taskItem.innerHTML = `
                     <input type="checkbox" class="task-checkbox" ${task.isComplete ? 'checked' : ''}>
@@ -258,12 +639,35 @@
                         ${formattedTimestamp ? `<span class="task-timestamp">${formattedTimestamp}</span>` : ''}
                         ${formattedDate ? `<span class="task-due-date ${dateClass}">Due: ${formattedDate}</span>` : ''}
                     </div>
+                    <button class="toggle-subtasks-btn" title="Toggle subtasks">▼ ${subtaskLabel}</button>
                     <div class="button-container">
                         <button class="btn edit-btn task-edit-btn">Edit</button>
                         <button class="btn delete-btn task-delete-btn">Delete</button>
                     </div>
                 `;
+                
+                // Add subtask list
+                const subtaskListContainer = document.createElement('div');
+                subtaskListContainer.innerHTML = `
+                    <ul class="subtask-list">
+                        ${task.subtasks ? task.subtasks.map((subtask, idx) => `
+                            <li data-subtask-index="${idx}">
+                                <input type="checkbox" class="task-checkbox subtask-checkbox" ${subtask.isComplete ? 'checked' : ''}>
+                                <div class="subtask-content">
+                                    <span class="subtask-text ${subtask.isComplete ? 'completed' : ''}">${subtask.text}</span>
+                                </div>
+                                <button class="btn delete-btn subtask-delete-btn">Delete</button>
+                            </li>
+                        `).join('') : ''}
+                    </ul>
+                    <div class="add-subtask-area">
+                        <input type="text" class="add-subtask-input" placeholder="Add a subtask...">
+                        <button class="btn add-subtask-btn">+</button>
+                    </div>
+                `;
+                
                 taskListElement.appendChild(taskItem);
+                taskListElement.appendChild(subtaskListContainer);
             });
         }
         
@@ -473,9 +877,64 @@
             // NEW: Handle checkbox click
             if (e.target.classList.contains('task-checkbox')) {
                 const taskItem = e.target.closest('li');
+                
+                // Check if it's a subtask checkbox
+                if (e.target.classList.contains('subtask-checkbox')) {
+                    const subtaskItem = e.target.closest('li[data-subtask-index]');
+                    const subtaskIndex = parseInt(subtaskItem.dataset.subtaskIndex);
+                    const taskItem = subtaskItem.closest('.task-list').querySelector('li[data-task-id]');
+                    const taskId = taskItem.dataset.taskId;
+                    const categoryId = e.target.closest('.category-block').dataset.categoryId;
+                    toggleSubtaskComplete(categoryId, taskId, subtaskIndex, e.target.checked);
+                } else {
+                    // Regular task checkbox
+                    const taskId = taskItem.dataset.taskId;
+                    const categoryId = e.target.closest('.category-block').dataset.categoryId;
+                    toggleTaskComplete(categoryId, taskId, e.target.checked);
+                }
+                return;
+            }
+            
+            // Handle toggle subtasks button
+            if (e.target.classList.contains('toggle-subtasks-btn')) {
+                const taskItem = e.target.closest('li');
+                const subtaskContainer = taskItem.nextElementSibling;
+                const subtaskList = subtaskContainer.querySelector('.subtask-list');
+                const subtaskCount = subtaskList.querySelectorAll('li').length;
+                const countLabel = subtaskCount > 0 ? ` (${subtaskCount})` : '';
+                
+                subtaskList.classList.toggle('collapsed');
+                e.target.textContent = subtaskList.classList.contains('collapsed') ? `▶${countLabel}` : `▼${countLabel}`;
+                return;
+            }
+            
+            // Handle add subtask
+            if (e.target.classList.contains('add-subtask-btn')) {
+                const subtaskContainer = e.target.closest('.add-subtask-area').parentElement;
+                const taskItem = subtaskContainer.previousElementSibling;
                 const taskId = taskItem.dataset.taskId;
                 const categoryId = e.target.closest('.category-block').dataset.categoryId;
-                toggleTaskComplete(categoryId, taskId, e.target.checked);
+                const subtaskInput = subtaskContainer.querySelector('.add-subtask-input');
+                const subtaskText = subtaskInput.value.trim();
+                
+                if (subtaskText) {
+                    addSubtask(categoryId, taskId, subtaskText);
+                    subtaskInput.value = '';
+                }
+                return;
+            }
+            
+            // Handle delete subtask
+            if (e.target.classList.contains('subtask-delete-btn')) {
+                const subtaskItem = e.target.closest('li[data-subtask-index]');
+                const subtaskIndex = parseInt(subtaskItem.dataset.subtaskIndex);
+                const taskItem = subtaskItem.closest('.task-list').querySelector('li[data-task-id]');
+                const taskId = taskItem.dataset.taskId;
+                const categoryId = e.target.closest('.category-block').dataset.categoryId;
+                
+                if (confirm('Delete this subtask?')) {
+                    deleteSubtask(categoryId, taskId, subtaskIndex);
+                }
                 return;
             }
 
@@ -598,7 +1057,8 @@
                 order: 0,
                 isComplete: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                dueDate: dueDate ? new Date(dueDate) : null
+                dueDate: dueDate ? new Date(dueDate) : null,
+                subtasks: []
             };
 
             const tasksRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks');
@@ -645,6 +1105,58 @@
               .update(updateData)
               .catch(error => console.error("Error updating task: ", error));
         }
+
+        // --- SUBTASK FUNCTIONS ---
+        
+        function addSubtask(categoryId, taskId, subtaskText) {
+            const user = auth.currentUser;
+            if (!categoryId || !taskId || !subtaskText || !user) return;
+            
+            const taskRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId);
+            
+            taskRef.get().then(doc => {
+                const task = doc.data();
+                const subtasks = task.subtasks || [];
+                subtasks.push({
+                    text: subtaskText,
+                    isComplete: false,
+                    createdAt: new Date()
+                });
+                taskRef.update({ subtasks: subtasks });
+            }).catch(err => console.error("Error adding subtask:", err));
+        }
+
+        function toggleSubtaskComplete(categoryId, taskId, subtaskIndex, isComplete) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const taskRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId);
+            
+            taskRef.get().then(doc => {
+                const task = doc.data();
+                if (task.subtasks && task.subtasks[subtaskIndex]) {
+                    task.subtasks[subtaskIndex].isComplete = isComplete;
+                    taskRef.update({ subtasks: task.subtasks });
+                }
+            }).catch(err => console.error("Error updating subtask:", err));
+        }
+
+        function deleteSubtask(categoryId, taskId, subtaskIndex) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const taskRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId);
+            
+            taskRef.get().then(doc => {
+                const task = doc.data();
+                if (task.subtasks) {
+                    task.subtasks.splice(subtaskIndex, 1);
+                    taskRef.update({ subtasks: task.subtasks });
+                }
+            }).catch(err => console.error("Error deleting subtask:", err));
+        }
+
+        // --- END SUBTASK FUNCTIONS ---
         
         function updateCategory(categoryId, newName) {
             const user = auth.currentUser;

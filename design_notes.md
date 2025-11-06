@@ -1,16 +1,44 @@
 # Design Notes & Future Improvements
 
-**Last Updated:** November 2, 2025  
+**Last Updated:** November 5, 2025  
 **Purpose:** Track UX observations, technical debt, and improvement ideas
+
+---
+
+## 📱 Mobile Testing Feedback - November 5, 2025
+
+### **Android Testing Results:**
+
+**✅ Working Well:**
+- Todo list functionality solid
+- Firebase sync working
+- Visual design translates well to mobile
+
+**❌ Issues Identified:**
+1. **Drag-and-drop scroll conflict** - Major UX problem
+   - Attempting to scroll page accidentally triggers task dragging
+   - Makes list unusable on touch devices
+   - **Priority:** HIGH - must fix before Phase 1 complete
+
+2. **Button size/spacing** - Not yet tested thoroughly
+   - May need larger touch targets
+   - May need more spacing between interactive elements
+
+**Decisions Made:**
+- Implement **Option A (Sidebar navigation)** for desktop
+- Mobile will have **collapsible hamburger menu**
+- Implement **hover-reveal controls** for desktop
+- Mobile will need **alternative interaction pattern** (swipe or long-press)
+- **Strategy:** Desktop-first development, then mobile-specific adaptations
 
 ---
 
 ## 🎨 UI/UX Concerns
 
-### **Issue #1: Navigation Menu for Multiple Tools** 🆕 *High Priority*
-**Status:** Not yet implemented  
-**Severity:** High (required for Phase 1)  
-**Date Added:** November 2, 2025
+### **Issue #1: Navigation Menu for Multiple Tools** ✅ *In Progress*
+**Status:** Approved and ready to implement  
+**Decision Date:** November 5, 2025  
+**Approved Solution:** Option A (Sidebar)
 
 **Current State:**
 - Single-page app with only todo list functionality
@@ -57,9 +85,24 @@ Keyboard shortcut to open tool switcher (Cmd/Ctrl + K)
 - **Use as:** Secondary navigation, not primary
 
 **Recommendation:**
-- **Primary:** Option A (Sidebar) - collapsible on mobile
-- **Secondary:** Option D (Command Palette) - for power users
-- **Implementation:** Phase 1, before adding second tool
+- **Desktop:** Option A (Sidebar) - collapsible on mobile ✅ **APPROVED**
+- **Mobile:** Hamburger menu with gesture support (avoid drag conflicts)
+- **Secondary:** Option D (Command Palette) - for power users (Phase 2)
+- **Implementation:** In progress - November 5, 2025
+
+**Mobile-Specific Considerations:**
+- Hamburger icon should be large and easily tappable (44x44px minimum)
+- Swipe from left edge to open menu (common mobile pattern)
+- Backdrop overlay when menu is open (tap outside to close)
+- Smooth animation (300ms) for open/close
+- Menu should overlay content, not push it (performance)
+
+**Next Steps:**
+1. Implement desktop sidebar (always visible)
+2. Add mobile hamburger toggle and collapse logic
+3. Test on Android (primary test device)
+4. Test on iOS Safari (secondary)
+5. Adjust based on feedback before moving to Calendar integration
 
 **Design Considerations:**
 ```html
@@ -86,60 +129,296 @@ Keyboard shortcut to open tool switcher (Cmd/Ctrl + K)
 
 ---
 
-### **Issue #2: Calendar-Todo Integration** 🆕 *High Priority*
-**Status:** Planning phase  
-**Date Added:** November 2, 2025
+### **Issue #2: Calendar-Todo Integration** ✅ *Decisions Finalized*
+**Status:** Specification complete - ready for implementation  
+**Date Added:** November 2, 2025  
+**Date Finalized:** November 5, 2025
 
 **Goal:**
 Seamless bi-directional integration between todo list and calendar.
 
-**Required Features:**
+---
 
-#### **Todo → Calendar:**
-1. **Create calendar events from tasks**
-   - Button: "Add to Calendar" on tasks with deadlines
-   - Auto-create all-day event on due date
-   - Or: Time-block tasks (choose time slot)
+## ✅ **FINALIZED DECISIONS - Calendar Integration MVP**
 
-2. **Task deadlines sync to calendar**
-   - Tasks with due dates appear as calendar events
-   - Option: Show as all-day events or reminders
+### **Decision 1: Sync Method**
+**Chosen:** Manual "Add to Calendar" Button (Option B)
 
-3. **Completed tasks update calendar**
-   - Mark calendar event as done when task is completed
-   - Or: Remove event, or add "✓" to title
+- Tasks will have an optional "� Add to Calendar" button
+- User explicitly chooses which tasks become calendar events
+- Provides user control and predictable behavior
+- Simple to implement and test
 
-#### **Calendar → Todo:**
-1. **Create tasks from calendar events**
-   - Button: "Create task" on calendar events
-   - Or: Auto-create tasks for events tagged "todo"
+### **Decision 2: Calendar Event Type**
+**Chosen:** Time-Block Events (Option B)
 
-2. **Show today's calendar events in todo list**
-   - "Today's Schedule" section at top of todo list
-   - Shows upcoming events (read-only)
+- User can select specific time when adding to calendar
+- Default: All-day event (can optionally add specific times)
+- Allows for better time management and scheduling
+- More flexible than all-day only
 
-3. **Deadline reminders based on calendar**
-   - If calendar event approaching, highlight related task
+**Implementation:**
+- Show time picker when "Add to Calendar" clicked
+- Default to all-day (checkboxes: "All day" checked by default)
+- If unchecked, show start/end time inputs
 
-**User Preferences to Consider:**
-- Auto-sync on/off toggle
-- Which calendar to sync with (if user has multiple)
-- Event types to sync (all events vs. only specific ones)
+### **Decision 3: Calendar → Todo Sync**
+**Chosen:** "Today's Schedule" Widget (Option D) - *with enhancement option*
 
-**Technical Implementation Notes:**
-- Google Calendar API supports event CRUD operations
-- Use event `description` field to store task ID for linking
-- Consider using event `extendedProperties` for metadata
-- Real-time sync: Calendar webhooks + Firestore triggers
+- Display read-only widget showing upcoming calendar events
+- Shows next 5-10 events in sidebar or dashboard
+- Does NOT automatically create tasks from calendar events
+- Clean separation: calendar for viewing, tasks for action items
 
-**Phase 1 Minimum Viable Integration:**
-- Manual "Add to Calendar" button on tasks
-- Display today's calendar events in sidebar widget
-- Full auto-sync in Phase 2
+**Future Enhancement (Phase 2):**
+- Option to manually create task from calendar event
+- Button: "Create Task" on calendar event in widget
+- Addresses concern: "may have to manually push calendar events to create tasks"
+
+### **Decision 4: Task Completion Behavior**
+**Chosen:** Do Nothing (Option D) - *with future enhancement note*
+
+- Completing a task does NOT affect the linked calendar event
+- User manages calendar separately
+- Simple, predictable, no surprises
+
+**Future Enhancement (Phase 2 or 3):**
+- Option C consideration: "Completed Tasks" calendar
+- Move completed task events to separate calendar
+- Good for review and reflection
+- **Note:** "Idea of a completed calendar would be nice for review and such"
+
+### **Decision 5: Which Google Calendar**
+**Chosen:** User Selects in Settings (Option B) - *with prominent UI*
+
+- Settings page: "Default calendar for tasks"
+- Dropdown showing all user's Google Calendars
+- **Critical:** Make this SUPER APPARENT to user
+  - Show selected calendar name in "Add to Calendar" confirmation
+  - Display calendar indicator in settings and when adding events
+  - Warning if no calendar selected
+  
+**UI Requirements:**
+- Settings: Large, clear "📅 Default Calendar: [School Calendar]"
+- Add to Calendar dialog: "This will add to: [School Calendar]"
+- Visual indicator (color dot matching calendar color)
+- **Goal:** User never wonders which calendar is being used/modified
 
 ---
 
-### **Issue #3: Button Clutter** ⚠️ *High Priority*
+## 📋 **Implementation Specification - MVP**
+
+### **Phase 1: Core Features**
+
+#### **1. Settings Page**
+```
+📅 Calendar Settings
+├── Default Calendar: [Dropdown: Select calendar...]
+├── Calendar color indicator: ● Green (School Calendar)
+└── Note: "Tasks will be added to this calendar"
+```
+
+#### **2. "Add to Calendar" Button**
+Location: On each task (when task has a due date)
+
+```html
+<button class="btn calendar-btn">📅 Add to Calendar</button>
+```
+
+Clicking opens modal:
+```
+Add to Calendar
+─────────────────
+Task: Grade homework
+Due: November 8, 2025
+
+☑ All day event
+☐ Set specific time
+   Start: [3:00 PM]
+   End:   [4:00 PM]
+
+Calendar: ● School Calendar
+
+[Cancel] [Add Event]
+```
+
+#### **3. "Today's Schedule" Widget**
+Location: Sidebar (below navigation menu)
+
+```
+📅 Today's Schedule
+─────────────────
+9:00 AM  Faculty Meeting
+10:30 AM  3rd Grade Math
+1:00 PM  Parent Conference
+3:00 PM  Planning Period
+
+[View Full Calendar →]
+```
+
+### **Phase 2: Enhancements**
+- Button to create task from calendar event
+- Mark calendar events as done when task completed
+- "Completed Tasks" calendar (separate view)
+
+---
+
+### **Issue #3: Button Clutter** ✅ *Implementation Approved*
+
+**Option A: Automatic Sync** (Aggressive)
+- Every task with a due date automatically creates a calendar event
+- Completing a task automatically updates the calendar event
+- Deleting a task automatically removes the calendar event
+- **Pros:** Seamless, no extra clicks
+- **Cons:** Could clutter calendar with many tasks, less user control
+
+**Option B: Manual "Add to Calendar" Button** (Conservative) ⭐ *Recommended for MVP*
+- Tasks have an optional "📅 Add to Calendar" button
+- User decides which tasks become calendar events
+- **Pros:** User control, cleaner calendar
+- **Cons:** Extra step, might forget to add important tasks
+
+**Option C: Hybrid** (Smart)
+- Auto-sync tasks tagged with specific category (e.g., "Important" or "Scheduled")
+- Manual button for others
+- **Pros:** Balance of automation and control
+- **Cons:** More complex to implement and explain
+
+**👉 Which approach do you prefer?**
+
+---
+
+### **Question 2: What Type of Calendar Events?**
+
+When a task becomes a calendar event, what should it look like?
+
+**Option A: All-Day Events**
+- Task due date becomes an all-day event
+- Example: "Grade homework" on Friday (all day)
+- **Pros:** Simple, doesn't require time selection
+- **Cons:** Doesn't help with time management
+
+**Option B: Time-Block Events** (Requires time input)
+- User selects specific time when adding to calendar
+- Example: "Grade homework" on Friday 3:00 PM - 4:00 PM
+- **Pros:** Better for time management and scheduling
+- **Cons:** Extra input field, more complexity
+
+**Option C: Reminders (Not Events)**
+- Use Google Calendar "reminders" feature instead of events
+- Appears in calendar but doesn't block time
+- **Pros:** Clean, doesn't clutter schedule
+- **Cons:** Different UI treatment, might be less visible
+
+**👉 Which type makes most sense for teachers?**
+
+---
+
+### **Question 3: Which Calendar Events Sync Back to Tasks?**
+
+When looking at Google Calendar, which events should appear in the todo list?
+
+**Option A: Only Events Created from Tasks**
+- One-way: tasks → calendar
+- Calendar events don't create tasks automatically
+- **Pros:** Simple, no clutter
+- **Cons:** Missing integration opportunity
+
+**Option B: All Events**
+- Every calendar event appears as a task in todo list
+- **Pros:** Complete visibility
+- **Cons:** Too much clutter (meetings, lunch, etc. become tasks)
+
+**Option C: Events with Specific Tag/Keyword**
+- Only events marked "TODO" or in a specific calendar become tasks
+- **Pros:** User control over what syncs
+- **Cons:** Requires user to remember tagging convention
+
+**Option D: Today's Events Widget (Read-Only)**
+- Show "Today's Schedule" section in todo list sidebar
+- Display next 5 events from calendar (read-only)
+- Don't create actual tasks from calendar events
+- **Pros:** Awareness without clutter
+- **Cons:** One-way visibility, can't act on events from todo list
+
+**👉 What level of calendar-to-todo sync do you want?**
+
+---
+
+### **Question 4: Task Completion Behavior**
+
+When you complete a task that has a linked calendar event:
+
+**Option A: Mark Calendar Event as Done**
+- Event stays on calendar with a "✓" or strikethrough
+- **Pros:** Historical record visible
+- **Cons:** Clutters calendar view
+
+**Option B: Delete Calendar Event**
+- Completed task removes the event entirely
+- **Pros:** Clean calendar
+- **Cons:** No record it was completed
+
+**Option C: Move to "Completed Tasks" Calendar**
+- Events move to a separate calendar (can hide/show)
+- **Pros:** Historical record, but can hide clutter
+- **Cons:** Requires separate calendar setup
+
+**Option D: Do Nothing**
+- Task completion doesn't affect calendar
+- User manually manages calendar separately
+- **Pros:** Simple, predictable
+- **Cons:** Duplicate work, events become stale
+
+**👉 What feels right for your workflow?**
+
+---
+
+### **Question 5: Multiple Google Calendars**
+
+Most users have multiple calendars (Personal, Work, School, etc.). Which should we use?
+
+**Option A: Primary Calendar Only**
+- All task events go to user's primary Google Calendar
+- **Pros:** Simple, one place
+- **Cons:** Mixes teaching tasks with personal events
+
+**Option B: User Selects Calendar**
+- Settings option: "Which calendar for todo tasks?"
+- **Pros:** Flexibility, can separate work/personal
+- **Cons:** Extra setup step
+
+**Option C: Create "Teaching Tasks" Calendar**
+- App auto-creates a dedicated calendar on first sync
+- User can hide/show this calendar in Google Calendar
+- **Pros:** Clean separation, easy to manage
+- **Cons:** Another calendar to manage
+
+**👉 What calendar setup makes sense?**
+
+---
+
+### **Summary: Recommended Starting Point (MVP)**
+
+Based on simplicity and iterative development:
+
+1. **Sync:** Manual "Add to Calendar" button *(Option B)*
+2. **Event Type:** Time-block with optional time *(Option B, default to all-day)*
+3. **Calendar → Todo:** Today's Events Widget only *(Option D)*
+4. **Completion:** Do nothing to calendar event *(Option D - user manages)*
+5. **Calendar:** User selects in settings *(Option B)*
+
+**This gives us:**
+- Simple first implementation
+- User control and predictability
+- Easy to test and iterate
+- Can enhance with auto-sync in Phase 2
+
+**👉 Does this MVP sound good, or do you want to adjust any of these decisions?**
+
+---
+
+### **Issue #3: Button Clutter** ✅ *Implementation Approved*
 **Status:** Identified, not yet addressed  
 **Severity:** Medium (will worsen as features grow)
 
@@ -219,7 +498,82 @@ Button to toggle between "Normal" and "Compact" view
 
 ---
 
-### **Issue #2: Date Input Clarity** ✅ *Addressed*
+**Note:** This is part of larger mobile UX strategy (see Mobile Testing Feedback section).
+
+---
+
+### **Issue #4: Mobile Drag-and-Drop Conflicts** 🚨 *Critical - High Priority*
+**Status:** Identified, needs immediate fix  
+**Date Identified:** November 5, 2025 (Android testing)  
+**Severity:** Critical (makes mobile unusable)
+
+**Problem:**
+SortableJS drag-and-drop interferes with normal scrolling on Android:
+- Attempting to scroll causes accidental task dragging
+- Makes the todo list frustrating to use on touch devices
+- Prevents users from navigating their task lists
+
+**Root Cause:**
+SortableJS treats touch events as drag initiators, conflicts with native scroll behavior.
+
+**Proposed Solutions:**
+
+#### **Option A: Disable Drag-and-Drop on Mobile** (Quick fix)
+- Detect mobile devices and disable SortableJS
+- **Pros:** Immediate fix, scroll works normally
+- **Cons:** Lose reordering functionality on mobile
+- **Implementation:** Check `window.innerWidth` or user agent
+
+```javascript
+const isMobile = window.innerWidth <= 768;
+if (!isMobile) {
+    new Sortable(taskList, { /* ... */ });
+}
+```
+
+#### **Option B: Long-Press to Activate Drag Mode** ⭐ *Recommended*
+- Require long-press (500ms) before drag begins
+- Visual feedback: task highlights when drag mode active
+- **Pros:** Keeps functionality, prevents accidents
+- **Cons:** Requires SortableJS configuration or custom implementation
+
+```javascript
+new Sortable(taskList, {
+    delay: 500, // 500ms delay before drag starts
+    delayOnTouchOnly: true, // Only delay on touch devices
+    // ...
+});
+```
+
+#### **Option C: Dedicated "Reorder Mode"**
+- Add "Reorder Tasks" button (like category reordering)
+- When active: show drag handles, disable other interactions
+- When inactive: normal scrolling and interactions
+- **Pros:** Clear, intentional, no conflicts
+- **Cons:** Extra step, mode switching
+
+#### **Option D: Up/Down Arrow Buttons (Mobile-Only)**
+- Replace drag-and-drop with arrow buttons on each task
+- Click ↑ to move up, ↓ to move down
+- **Pros:** Simple, clear, no gesture conflicts
+- **Cons:** Tedious for long lists, many taps for big moves
+
+**Recommended Implementation:**
+1. **Phase 1:** Option B (Long-press) - balances UX and functionality
+2. **Test:** Verify 500ms delay feels natural on Android
+3. **Fallback:** Option A (disable) if long-press doesn't work well
+4. **Phase 2:** Consider Option C (Reorder Mode) for power users
+
+**Testing Checklist:**
+- [ ] Test scroll behavior on Android Chrome
+- [ ] Test long-press drag initiation
+- [ ] Verify visual feedback when drag mode activates
+- [ ] Test on iOS Safari (behavior may differ)
+- [ ] Confirm desktop drag-and-drop still works normally
+
+---
+
+### **Issue #5: Date Input Clarity** ✅ *Addressed*
 **Status:** Partially resolved  
 **Date Fixed:** November 2, 2025
 
@@ -575,3 +929,14 @@ Random feature ideas to explore later:
   - ✅ Documented Issue #3: Alternating category backgrounds (implemented)
   - Reorganized issue numbering
   - Added sidebar navigation mockup and recommendations
+
+- **v2.0** - November 5, 2025 - Major update after Android testing
+  - 📱 Added Mobile Testing Feedback section
+  - ✅ Issue #1: Approved Option A (Sidebar) - implementation in progress
+  - 🚧 Issue #2: Expanded into discussion questions - awaiting user decisions
+  - ✅ Issue #3: Approved hover-reveal controls for desktop
+  - 🚨 Issue #4: Added critical drag-and-drop mobile conflict
+  - ✅ Issue #5: Renamed from Issue #2 (Date Input Clarity)
+  - Updated Issue #6: Category backgrounds (formerly #3)
+  - Documented mobile-first strategy and divergent UX patterns
+  - Updated all statuses based on decisions and testing feedback
