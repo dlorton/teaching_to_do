@@ -1,35 +1,124 @@
 # Design Notes & Future Improvements
 
-**Last Updated:** November 5, 2025  
+**Last Updated:** November 5, 2025 (Post-Implementation Testing)  
 **Purpose:** Track UX observations, technical debt, and improvement ideas
 
 ---
 
-## 📱 Mobile Testing Feedback - November 5, 2025
+## 🧪 Testing Feedback - November 5, 2025
 
-### **Android Testing Results:**
+### **Desktop Testing Results:**
 
 **✅ Working Well:**
-- Todo list functionality solid
+- Navigation sidebar implemented and functional
+- Subtasks feature implemented
 - Firebase sync working
-- Visual design translates well to mobile
+- Visual design solid
 
-**❌ Issues Identified:**
-1. **Drag-and-drop scroll conflict** - Major UX problem
-   - Attempting to scroll page accidentally triggers task dragging
-   - Makes list unusable on touch devices
-   - **Priority:** HIGH - must fix before Phase 1 complete
+**🐛 Bugs Identified:**
+1. **Task reordering broken** - HIGH PRIORITY
+   - Can grab and drag tasks, but they immediately snap back to original position
+   - Likely: SortableJS not updating Firebase with new order
+   - **Fix needed:** Update task order in Firestore after drag ends
 
-2. **Button size/spacing** - Not yet tested thoroughly
-   - May need larger touch targets
-   - May need more spacing between interactive elements
+2. **Subtask input missing Enter key support** - MEDIUM PRIORITY
+   - Can only add subtasks by clicking "+" button
+   - Expected: Press Enter to add subtask
+   - **Fix needed:** Add keypress listener for Enter key on subtask input
+
+3. **Category reordering blocks mouse wheel scroll** - MEDIUM PRIORITY
+   - While dragging category, cannot scroll page with mouse wheel
+   - Makes reordering difficult with many categories
+   - **Fix needed:** SortableJS configuration or allow scroll during drag
+
+4. **Empty space below tasks** - LOW PRIORITY (Visual)
+   - Categories with few tasks show large empty space below
+   - **Fix needed:** Adjust min-height or padding on category blocks
+
+5. **Subtask editing not implemented** - HIGH PRIORITY
+   - Cannot edit subtask text after creation (only delete/complete)
+   - **Fix needed:** Add inline edit mode for subtasks (like tasks have)
+
+**🎨 Design Improvements Requested:**
+1. **Delete button icon** - Replace "Delete" text with trash can icon 🗑️
+   - Keep current styling/theme
+   - Apply to both task and subtask delete buttons
+
+2. **Task completion cascades to subtasks** - MEDIUM PRIORITY
+   - Checking a task should auto-check all its subtasks
+   - Expected behavior: Completing parent completes all children
+   - **Fix needed:** Add logic in toggleTaskComplete()
+
+3. **Reorder Categories button placement** - UI ORGANIZATION
+   - Move "Reorder Categories" button next to "Add Category" button
+   - Current: Next to Sign Out button in header
+   - Requested: In category management area for better UX
+
+4. **Completed tasks hide overdue styling** - VISUAL POLISH
+   - Checked tasks still show red "overdue" date color
+   - Draws unwanted attention to completed items
+   - **Fix needed:** Don't apply .overdue or .due-today classes when task.isComplete
+
+5. **Subtask reordering not implemented** - FEATURE REQUEST
+   - Cannot reorder subtasks within a task
+   - **Fix needed:** Add SortableJS to subtask lists (like tasks have)
+
+---
+
+### **Android Mobile Testing Results:**
+
+**🐛 Issues Identified:**
+1. **Drag-and-drop scroll conflict** - CRITICAL
+   - Not enough room to scroll without accidentally grabbing tasks
+   - Worse than previous test - subtasks add more interactive elements
+   - Makes mobile version nearly unusable
+   - **Priority:** CRITICAL - must fix before release
+   - **Solution:** Add delay: 500, delayOnTouchOnly: true to all SortableJS instances
+
+2. **Navigation menu not visible on mobile** - CRITICAL
+   - Sidebar not appearing on mobile
+   - Hamburger toggle button may not be visible
+   - **Priority:** CRITICAL - navigation is inaccessible
+   - **Fix needed:** Debug mobile sidebar CSS, ensure toggle button appears
 
 **Decisions Made:**
-- Implement **Option A (Sidebar navigation)** for desktop
-- Mobile will have **collapsible hamburger menu**
-- Implement **hover-reveal controls** for desktop
+- Implement **Option A (Sidebar navigation)** for desktop ✅
+- Mobile will have **collapsible hamburger menu** ⚠️ (needs debugging)
+- Implement **hover-reveal controls** for desktop (pending)
 - Mobile will need **alternative interaction pattern** (swipe or long-press)
 - **Strategy:** Desktop-first development, then mobile-specific adaptations
+
+---
+
+## 📋 Bug Tracking & Fix Queue
+
+### **Critical Priority (Release Blockers):**
+1. ❌ **Mobile navigation not visible** - Sidebar/hamburger menu not appearing on Android
+2. ❌ **Mobile scroll conflict** - Drag-and-drop prevents scrolling (add delay: 500, delayOnTouchOnly: true)
+
+### **High Priority (Core Functionality):**
+3. ❌ **Task reordering broken** - Tasks snap back after drag (fix Firebase order update)
+4. ❌ **Subtask editing missing** - Cannot edit subtask text (implement inline edit like tasks)
+
+### **Medium Priority (UX Improvements):**
+5. ❌ **Subtask input Enter key** - Add keypress listener for Enter to add subtask
+6. ❌ **Category reordering blocks scroll** - Mouse wheel doesn't work while dragging category
+7. ❌ **Task completion cascade** - Checking task should check all subtasks
+8. ❌ **Completed task date styling** - Remove red overdue color when task is completed
+9. ❌ **Subtask reordering** - Implement drag-and-drop for subtasks
+
+### **Low Priority (Polish):**
+10. ❌ **Delete button icons** - Replace "Delete" text with trash can icon 🗑️
+11. ❌ **Reorder Categories button placement** - Move next to "Add Category" button
+12. ❌ **Empty space below tasks** - Adjust min-height on categories with few tasks
+
+### **Completed Fixes:**
+- ✅ Edit feature cleanup (Nov 2)
+- ✅ Timestamp display (Nov 2)
+- ✅ Deadline editing (Nov 2)
+- ✅ Alternating category backgrounds (Nov 2)
+- ✅ Navigation sidebar (Nov 5)
+- ✅ Subtask feature implementation (Nov 5)
 
 ---
 

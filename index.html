@@ -86,12 +86,12 @@
 
         /* --- CATEGORIES & TASKS --- */
         #categories-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .category-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; flex: 1 1 300px; max-width: 100%; transition: border-color 0.2s ease-in-out; }
+        .category-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; flex: 1 1 300px; max-width: 100%; transition: border-color 0.2s ease-in-out; min-height: auto; }
         .category-block.alternate { background: #252525; } /* Slightly lighter than bg-secondary (#1E1E1E) */
         .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .category-title { font-size: 1.2em; font-weight: bold; }
         
-        .task-list { list-style-type: none; padding: 0; }
+        .task-list { list-style-type: none; padding: 0; margin: 0; }
         .task-list li { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 8px; display: flex; align-items: center; gap: 10px; padding: 12px; }
         .task-checkbox { margin-right: 4px; }
         .task-content { flex-grow: 1; display: flex; flex-direction: column; }
@@ -392,11 +392,14 @@
                 <h1 id="main-title">My To-Do List</h1>
                 <div>
                     <button id="edit-title-btn" class="btn edit-btn">Edit Title</button>
-                    <button id="toggle-reorder-btn" class="btn">Reorder Categories</button>
                     <button id="logout-btn" class="logout-btn">Sign Out</button>
                 </div>
             </div>
-            <div id="add-category-area"><input type="text" id="new-category-input" placeholder="Create a new category..."><button id="add-category-btn" class="btn">Add Category</button></div>
+            <div id="add-category-area">
+                <input type="text" id="new-category-input" placeholder="Create a new category...">
+                <button id="add-category-btn" class="btn">Add Category</button>
+                <button id="toggle-reorder-btn" class="btn">Reorder Categories</button>
+            </div>
             <div id="categories-container"></div>
         </div>
     </div>
@@ -584,7 +587,7 @@
                         <span class="category-title">${category.name}</span>
                         <div class="category-actions">
                             <button class="btn edit-btn category-edit-btn">Edit</button>
-                            <button class="btn delete-btn category-delete-btn">Delete</button>
+                            <button class="btn delete-btn category-delete-btn" title="Delete category">🗑️</button>
                         </div>
                     </div>
                     <div class="add-task-area">
@@ -642,7 +645,7 @@
                     <button class="toggle-subtasks-btn" title="Toggle subtasks">▼ ${subtaskLabel}</button>
                     <div class="button-container">
                         <button class="btn edit-btn task-edit-btn">Edit</button>
-                        <button class="btn delete-btn task-delete-btn">Delete</button>
+                        <button class="btn delete-btn task-delete-btn" title="Delete task">🗑️</button>
                     </div>
                 `;
                 
@@ -656,7 +659,7 @@
                                 <div class="subtask-content">
                                     <span class="subtask-text ${subtask.isComplete ? 'completed' : ''}">${subtask.text}</span>
                                 </div>
-                                <button class="btn delete-btn subtask-delete-btn">Delete</button>
+                                <button class="btn delete-btn subtask-delete-btn" title="Delete subtask">🗑️</button>
                             </li>
                         `).join('') : ''}
                     </ul>
