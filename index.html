@@ -628,7 +628,8 @@
                 }
 
                 const formattedDate = task.dueDate ? formatDate(task.dueDate.toDate()) : '';
-                const dateClass = task.dueDate ? getDateClass(task.dueDate.toDate()) : '';
+                // Don't apply overdue/due-today styling if task is completed
+                const dateClass = (task.dueDate && !task.isComplete) ? getDateClass(task.dueDate.toDate()) : '';
                 const formattedTimestamp = task.createdAt ? formatTimestamp(task.createdAt) : '';
                 
                 // Count subtasks
@@ -1006,6 +1007,17 @@
                 }
                 taskInput.value = '';
                 dateInput.value = '';
+            } else if (e.target.classList.contains('add-subtask-input')) {
+                const subtaskInput = e.target;
+                const subtaskContainer = subtaskInput.closest('.add-subtask-area').parentElement;
+                const taskItem = subtaskContainer.previousElementSibling;
+                const taskId = taskItem.dataset.taskId;
+                const subtaskText = subtaskInput.value.trim();
+                
+                if (subtaskText) {
+                    addSubtask(categoryId, taskId, subtaskText);
+                    subtaskInput.value = '';
+                }
             } else if (e.target.classList.contains('edit-input')) {
                 const newText = e.target.value.trim();
                 const taskItem = e.target.closest('li');
@@ -1074,9 +1086,30 @@
         function toggleTaskComplete(categoryId, taskId, isComplete) {
             const user = auth.currentUser;
             if (!user) return;
-            db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId)
-              .update({ isComplete: isComplete })
-              .catch(err => console.error("Error updating task status", err));
+            
+            const taskRef = db.collection('users').doc(user.uid).collection('categories').doc(categoryId).collection('tasks').doc(taskId);
+            
+            // If completing task, also complete all subtasks
+            if (isComplete) {
+                taskRef.get().then(doc => {
+                    const task = doc.data();
+                    const updateData = { isComplete: isComplete };
+                    
+                    // Mark all subtasks as complete
+                    if (task.subtasks && task.subtasks.length > 0) {
+                        updateData.subtasks = task.subtasks.map(subtask => ({
+                            ...subtask,
+                            isComplete: true
+                        }));
+                    }
+                    
+                    taskRef.update(updateData).catch(err => console.error("Error updating task status", err));
+                });
+            } else {
+                // If uncompleting task, just update task (leave subtasks as-is)
+                taskRef.update({ isComplete: isComplete })
+                    .catch(err => console.error("Error updating task status", err));
+            }
         }
 
         function deleteCategory(categoryId) {
