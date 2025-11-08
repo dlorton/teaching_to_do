@@ -1,0 +1,12 @@
+/* Tailwind v4 style (recommended) */
+@import "tailwindcss";
+
+
+/* App globals (optional) */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+}
