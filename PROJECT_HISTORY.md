@@ -60,6 +60,16 @@
 - Android mobile testing revealed 2 **critical** issues
 - Created `TESTING_SUMMARY.md` with detailed bug reports
 
+**Night Session - Quick Wins:**
+- ✅ Fixed 6 issues (all low/medium priority):
+  1. Replaced delete buttons with trash icons 🗑️
+  2. Moved "Reorder Categories" button to category area
+  3. Fixed empty space below tasks (CSS min-height)
+  4. Added Enter key support for subtask input
+  5. Task completion cascades to all subtasks
+  6. Removed red overdue styling from completed tasks
+- **Status at end of day:** 6 remaining (2 critical, 2 high, 2 medium)
+
 **Key Learnings:**
 - Mobile requires fundamentally different UX patterns
 - Drag-and-drop conflicts with scrolling on touch devices
@@ -162,38 +172,35 @@
 
 ---
 
-## 🚀 Current Status (November 5, 2025)
+## 🚀 Current Status (November 5, 2025 - End of Day)
 
 ### **What's Working:**
 - ✅ Google Sign-In (Firebase Auth)
 - ✅ Todo list (create, edit, delete, complete)
 - ✅ Categories (create, edit, delete, reorder)
-- ✅ Due dates (set, edit, remove, overdue highlighting)
+- ✅ Due dates (set, edit, remove, smart overdue highlighting)
 - ✅ Timestamps (relative time display)
-- ✅ Subtasks (add, delete, complete)
-- ✅ Navigation sidebar (desktop)
+- ✅ Subtasks (add, delete, complete, Enter key support)
+- ✅ Navigation sidebar (desktop - mobile needs debugging)
 - ✅ Firebase real-time sync
 - ✅ Dark mode design
+- ✅ Task completion cascades to subtasks
+- ✅ Trash can icons for delete buttons
+- ✅ Completed tasks don't show red dates
 
 ### **Critical Issues (Release Blockers):**
-- ❌ Mobile navigation not visible
+- ❌ Mobile navigation not visible (hamburger menu)
 - ❌ Mobile drag-and-drop prevents scrolling
 
 ### **High Priority Bugs:**
-- ❌ Task reordering broken (snaps back)
+- ❌ Task reordering broken (snaps back after drag)
 - ❌ Subtask editing not implemented
 
 ### **Medium Priority:**
-- ❌ Subtask input missing Enter key support
-- ❌ Category reordering blocks mouse wheel scroll
-- ❌ Task completion doesn't cascade to subtasks
-- ❌ Completed tasks still show red overdue dates
 - ❌ Subtask reordering not implemented
+- ❌ Category reordering blocks mouse wheel scroll
 
-### **Low Priority:**
-- ❌ Delete buttons should be icons
-- ❌ Reorder Categories button placement
-- ❌ Empty space below tasks in sparse categories
+**Next Session Priority:** Fix the 2 critical mobile issues first, then tackle high-priority bugs.
 
 ---
 
@@ -277,20 +284,29 @@ users/
 
 ## 🔮 Next Steps
 
-### **Immediate (This Session):**
-1. Fix mobile navigation visibility
-2. Add SortableJS delay for mobile touch
-3. Fix task reordering (Firebase update)
-4. Implement subtask editing
+### **Immediate (Next Session - November 6):**
+1. 🔴 Fix mobile navigation visibility (debug CSS, hamburger button)
+2. 🔴 Add SortableJS delay for mobile touch (delay: 500, delayOnTouchOnly: true)
+3. 🔴 Fix task reordering (add Firebase order update on drag end)
+4. 🔴 Implement subtask editing (toggleSubtaskEditMode function)
 
-### **Short Term (Next Session):**
-5. Add Enter key for subtask input
-6. Implement task → subtask completion cascade
-7. Remove overdue styling from completed tasks
-8. Test thoroughly on both platforms
+### **Short Term (This Week):**
+5. 🟡 Add subtask reordering with SortableJS
+6. 🟡 Fix category reordering scroll issue
+7. Test all fixes thoroughly on desktop and mobile
+8. Update documentation with solutions
 
 ### **Medium Term (Next Week):**
-9. Add subtask reordering
+9. Begin Google Calendar API integration
+10. Implement Settings page for calendar selection
+11. Create "Add to Calendar" button on tasks
+12. Build "Today's Schedule" widget
+
+### **Long Term (Phase 1):**
+13. Complete Calendar integration MVP
+14. Supply tracker
+15. Resource database
+16. Lesson planner
 10. Replace delete buttons with icons
 11. Implement hover-reveal controls (desktop)
 12. Fix category reordering scroll issue

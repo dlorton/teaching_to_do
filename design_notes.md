@@ -101,24 +101,24 @@
 4. ❌ **Subtask editing missing** - Cannot edit subtask text (implement inline edit like tasks)
 
 ### **Medium Priority (UX Improvements):**
-5. ❌ **Subtask input Enter key** - Add keypress listener for Enter to add subtask
+5. ❌ **Subtask reordering** - Implement drag-and-drop for subtasks
 6. ❌ **Category reordering blocks scroll** - Mouse wheel doesn't work while dragging category
-7. ❌ **Task completion cascade** - Checking task should check all subtasks
-8. ❌ **Completed task date styling** - Remove red overdue color when task is completed
-9. ❌ **Subtask reordering** - Implement drag-and-drop for subtasks
 
-### **Low Priority (Polish):**
-10. ❌ **Delete button icons** - Replace "Delete" text with trash can icon 🗑️
-11. ❌ **Reorder Categories button placement** - Move next to "Add Category" button
-12. ❌ **Empty space below tasks** - Adjust min-height on categories with few tasks
-
-### **Completed Fixes:**
+### **Completed Fixes (November 5, 2025):**
 - ✅ Edit feature cleanup (Nov 2)
 - ✅ Timestamp display (Nov 2)
 - ✅ Deadline editing (Nov 2)
 - ✅ Alternating category backgrounds (Nov 2)
 - ✅ Navigation sidebar (Nov 5)
 - ✅ Subtask feature implementation (Nov 5)
+- ✅ Delete button icons - Replaced text with 🗑️ (Nov 5)
+- ✅ Reorder Categories button placement - Moved to category area (Nov 5)
+- ✅ Empty space below tasks - Fixed min-height (Nov 5)
+- ✅ Subtask Enter key support - Added keypress listener (Nov 5)
+- ✅ Task completion cascade - Parent completion marks all subtasks complete (Nov 5)
+- ✅ Remove overdue styling from completed - No red dates on done tasks (Nov 5)
+
+**Status:** 6 items remaining (2 critical, 2 high, 2 medium)
 
 ---
 
