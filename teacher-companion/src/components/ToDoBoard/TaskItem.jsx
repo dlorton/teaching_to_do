@@ -16,7 +16,7 @@ const todayClass = (date) => {
 };
 
 
-export default function TaskItem({ user, catId, task }) {
+export default function TaskItem({ user, listId, catId, task }) {
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(task.text);
     const [due, setDue] = useState(task.dueDate ? new Date(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate) : null);
@@ -25,7 +25,7 @@ export default function TaskItem({ user, catId, task }) {
     useEffect(() => setText(task.text), [task.text]);
 
 
-    const taskRef = useMemo(() => doc(db, "users", user.uid, "categories", catId, "tasks", task.id), [user, catId, task.id]);
+    const taskRef = useMemo(() => doc(db, "users", user.uid, "lists", listId, "categories", catId, "tasks", task.id), [user, listId, catId, task.id]);
 
 
     const toggleDone = async (v) => {
@@ -78,6 +78,23 @@ export default function TaskItem({ user, catId, task }) {
         await updateDoc(taskRef, { subtasks });
     };
 
+    const editSub = async (idx, newText) => {
+        const snap = await getDoc(taskRef);
+        const cur = snap.data();
+        const subtasks = cur.subtasks || [];
+        if (subtasks[idx]) subtasks[idx].text = newText;
+        await updateDoc(taskRef, { subtasks });
+    };
+
+    const reorderSub = async (oldIdx, newIdx) => {
+        const snap = await getDoc(taskRef);
+        const cur = snap.data();
+        const subtasks = cur.subtasks || [];
+        const [movedItem] = subtasks.splice(oldIdx, 1);
+        subtasks.splice(newIdx, 0, movedItem);
+        await updateDoc(taskRef, { subtasks });
+    };
+
 
     const createdAt = task.createdAt?.toDate ? task.createdAt.toDate() : task.createdAt;
     const human = createdAt
@@ -103,6 +120,9 @@ export default function TaskItem({ user, catId, task }) {
             )}
         >
             <div className="flex items-start gap-3">
+                <span className="task-drag-handle mt-1 cursor-move text-zinc-600 hover:text-zinc-400" title="Drag to reorder task">
+                    ⋮⋮
+                </span>
                 <input type="checkbox" className="mt-1 h-4 w-4" checked={!!task.isComplete} onChange={(e) => toggleDone(e.target.checked)} />
                 <div className="flex-1">
                     {editing ? (
@@ -134,7 +154,15 @@ export default function TaskItem({ user, catId, task }) {
                     )}
 
 
-                    <Subtasks items={task.subtasks || []} onAdd={addSubtask} onToggle={toggleSub} onDelete={delSub} />
+                    <Subtasks 
+                        items={task.subtasks || []} 
+                        onAdd={addSubtask} 
+                        onToggle={toggleSub} 
+                        onDelete={delSub} 
+                        onEdit={editSub}
+                        onReorder={reorderSub}
+                        isParentEditing={editing}
+                    />
                 </div>
                 <div className="flex shrink-0 gap-1 self-start">
                     {!editing && (

@@ -1,7 +1,64 @@
 # Design Notes & Future Improvements
 
-**Last Updated:** November 8, 2025 (React Migration Complete)  
+**Last Updated:** November 16, 2025 (User Testing & Enhancements Complete)  
 **Purpose:** Track UX observations, technical debt, and improvement ideas
+
+---
+
+## 🎉 November 16, 2025 - User Testing Success
+
+### **Features Implemented:**
+All user-requested improvements successfully implemented and tested:
+
+1. ✅ **Category Collapse/Expand**
+   - Toggles task list visibility per category
+   - Shows task count when collapsed
+   - Reduces visual clutter
+
+2. ✅ **Conditional Due Date Input**
+   - Date picker only appears when user starts typing task text
+   - Cleaner default interface
+   - Progressive disclosure pattern
+
+3. ✅ **Subtask Editing in Task Edit Mode**
+   - When editing a task, subtasks become editable inline
+   - Click subtask text or ✏️ icon to edit
+   - ✓ to save, X to cancel
+   - Seamless integration with task editing flow
+
+4. ✅ **Drag-and-Drop Reordering**
+   - Categories: ⋮⋮ handle before collapse button
+   - Tasks: ⋮⋮ handle before checkbox
+   - Subtasks: ⋮⋮ handle at start of each subtask
+   - All three levels fully functional
+
+5. ✅ **Multiple Todo Lists**
+   - Complete data model restructure
+   - New Firestore path: `users/{userId}/lists/{listId}/categories/{catId}/tasks/{taskId}`
+   - List selector dropdown, New List, Rename, Delete buttons
+   - Auto-creates "My Tasks" default list
+   - Cannot delete last remaining list
+
+### **Technical Challenges Resolved:**
+- **SortableJS Configuration:**
+  - `ghostClass` must be single class name (not space-separated Tailwind classes)
+  - Added `sortable-ghost` CSS class in index.css
+  - CSS Grid breaks SortableJS multi-column layouts → switched to Flex
+  - `className="contents"` removes DOM wrapper, breaking Sortable tracking
+  - `forceFallback: true` ensures consistent behavior across browsers
+  - `delay: 100, delayOnTouchOnly: true` for mobile touch support
+
+- **Firestore Security Rules:**
+  - Updated for new lists-based data model
+  - Proper nesting validation for all collection paths
+
+### **Impact on Previous Bug List:**
+✅ **All November 5 Bugs Resolved:**
+- Task reordering: Fixed with SortableJS configuration
+- Subtask editing: Implemented inline editing
+- Subtask reordering: Implemented with drag-and-drop
+- Mobile drag-and-drop: Configured with delay settings
+- Category reordering: Working with Flex layout
 
 ---
 
@@ -15,21 +72,7 @@
 - ✅ All features from vanilla version preserved
 
 ### **Impact on Bug List:**
-Many bugs from November 5 testing may be resolved due to React's better state management and component lifecycle. **Needs verification testing.**
-
-**Potentially Fixed:**
-- Task reordering (React state + Sortable cleanup may have fixed snap-back)
-- Mobile navigation (Tailwind responsive classes + proper hamburger implementation)
-- Empty space issues (Tailwind's better layout system)
-
-**Still Need Implementation:**
-- Subtask editing (wasn't implemented before, still needed)
-- Subtask reordering (wasn't implemented before, still needed)
-
-**Need Testing:**
-- Mobile drag-and-drop with delay
-- Category reordering scroll behavior
-- All mobile interactions
+Many bugs from November 5 testing were resolved through React migration and November 16 enhancements.
 
 ---
 

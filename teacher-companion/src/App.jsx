@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { auth } from "./lib/firebase";
 import Sidebar from "./components/Sidebar";
-import TodoBoard from "./components/ToDoBoard/TodoBoard";
+import TodoBoard from "./components/ToDoBoard/ListName";
 
 
 export default function App() {

@@ -17,15 +17,16 @@ import Sortable from "sortablejs";
 import AddTask from "./AddTask";
 import TaskItem from "./TaskItem";
 
-export default function CategoryCard({ user, cat }) {
+export default function CategoryCard({ user, listId, cat }) {
     const [name, setName] = useState(cat.name);
     const [editing, setEditing] = useState(false);
     const [tasks, setTasks] = useState([]);
+    const [collapsed, setCollapsed] = useState(false);
 
 
     const tasksRef = useMemo(
-        () => collection(db, "users", user.uid, "categories", cat.id, "tasks"),
-        [user, cat.id]
+        () => collection(db, "users", user.uid, "lists", listId, "categories", cat.id, "tasks"),
+        [user, listId, cat.id]
     );
 
 
@@ -44,7 +45,7 @@ export default function CategoryCard({ user, cat }) {
     const sortableRef = useRef(null);
     useEffect(() => {
         const el = listRef.current;
-        if (!el || tasks.length < 2) return;
+        if (!el || tasks.length === 0) return;
         if (sortableRef.current) {
             try { sortableRef.current.destroy(); } catch { }
             sortableRef.current = null;
@@ -52,7 +53,11 @@ export default function CategoryCard({ user, cat }) {
         sortableRef.current = new Sortable(el, {
             group: "tasks",
             animation: 150,
-            ghostClass: "opacity-50 bg-zinc-800",
+            handle: ".task-drag-handle",
+            ghostClass: "sortable-ghost",
+            delay: 100,
+            delayOnTouchOnly: true,
+            forceFallback: true,
             onEnd: async () => {
                 if (!listRef.current) return;
                 const items = Array.from(listRef.current.children);
@@ -68,14 +73,14 @@ export default function CategoryCard({ user, cat }) {
     }, [tasks.length, tasksRef]);
 
     const updateCatName = async () => {
-        await updateDoc(doc(db, "users", user.uid, "categories", cat.id), { name });
+        await updateDoc(doc(db, "users", user.uid, "lists", listId, "categories", cat.id), { name });
         setEditing(false);
     };
 
 
     const removeCat = async () => {
         if (!confirm("Delete this category and all its tasks?")) return;
-        await deleteDoc(doc(db, "users", user.uid, "categories", cat.id));
+        await deleteDoc(doc(db, "users", user.uid, "lists", listId, "categories", cat.id));
     };
 
 
@@ -111,7 +116,21 @@ export default function CategoryCard({ user, cat }) {
                         </button>
                     </div>
                 ) : (
-                    <h3 className="text-lg font-semibold text-zinc-100">{cat.name}</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="category-drag-handle cursor-move text-zinc-500 hover:text-zinc-300" title="Drag to reorder category">
+                            ⋮⋮
+                        </span>
+                        <button
+                            className="text-zinc-400 hover:text-teal-300"
+                            onClick={() => setCollapsed((v) => !v)}
+                            title={collapsed ? "Expand tasks" : "Collapse tasks"}
+                        >
+                            {collapsed ? "▶" : "▼"}
+                        </button>
+                        <h3 className="text-lg font-semibold text-zinc-100">
+                            {cat.name} {tasks.length > 0 && <span className="text-sm text-zinc-400">({tasks.length})</span>}
+                        </h3>
+                    </div>
                 )}
                 <div className="flex shrink-0 items-center gap-2">
                     <button
@@ -131,16 +150,20 @@ export default function CategoryCard({ user, cat }) {
             </div>
 
 
-            <AddTask onAdd={addTask} />
+            {!collapsed && (
+                <>
+                    <AddTask onAdd={addTask} />
 
 
-            <ul ref={listRef} className="space-y-2">
-                {tasks.map((t) => (
-                    <li key={t.id} data-id={t.id} className="contents">
-                        <TaskItem user={user} catId={cat.id} task={t} />
-                    </li>
-                ))}
-            </ul>
+                    <ul ref={listRef} className="space-y-2">
+                        {tasks.map((t) => (
+                            <li key={t.id} data-id={t.id}>
+                                <TaskItem user={user} listId={listId} catId={cat.id} task={t} />
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
         </div>
     );
 }

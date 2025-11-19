@@ -147,6 +147,71 @@ src/
 
 ---
 
+### **November 16, 2025 - User Testing & Feature Enhancements**
+**Focus:** User-driven improvements based on testing feedback
+
+**Completed:**
+- ✅ **Category Collapse/Expand**: Added toggle button (▼/▶) to collapse task lists per category
+  - Shows task count when collapsed
+  - Reduces visual clutter for better navigation
+- ✅ **Conditional Due Date Input**: Date picker only appears after user starts typing task text
+  - Cleaner default interface
+  - Automatically shows/hides based on user input
+- ✅ **Subtask Editing in Task Edit Mode**: When editing a task, subtasks become editable inline
+  - Click subtask text or edit icon (✏️) to edit
+  - Checkmark (✓) to save, X to cancel
+  - No separate edit button needed
+- ✅ **Drag-and-Drop Handles**: Added visible `⋮⋮` handles for reordering
+  - Categories: Handle before collapse button
+  - Tasks: Handle before checkbox
+  - Subtasks: Handle at start of each subtask
+  - Consistent design across all three levels
+- ✅ **Multiple Todo Lists Feature**: Complete data model restructure
+  - New Firestore structure: `users/{userId}/lists/{listId}/categories/{catId}/tasks/{taskId}`
+  - List selector dropdown (larger, emphasized font)
+  - New List, Rename List, Delete List buttons
+  - Auto-creates "My Tasks" default list
+  - Cannot delete last remaining list
+- ✅ **List Management UI**: Reorganized header layout
+  - All list controls grouped on left side
+  - Larger dropdown with `text-lg` and `font-medium`
+  - Delete button with red border styling
+  - Sign Out moved to right side
+
+**Technical Fixes:**
+- ✅ Fixed drag-and-drop functionality issues:
+  - Removed `className="contents"` which broke Sortable tracking
+  - Changed category layout from CSS Grid to Flex column (Grid broke SortableJS)
+  - Fixed `ghostClass` error (must be single class, not space-separated)
+  - Added `sortable-ghost` CSS class in index.css
+  - Added `forceFallback: true` for consistent browser behavior
+  - Added mobile touch support (`delay: 100, delayOnTouchOnly: true`)
+  - Removed item count restrictions (changed from `< 2` to `=== 0`)
+  - Fixed dependencies in useEffect hooks
+- ✅ Updated Firestore security rules for new lists structure
+- ✅ Renamed `TodoBoard.jsx` to `ListName.jsx` (user preference)
+
+**What's Working:**
+- ✅ All drag-and-drop (categories, tasks, subtasks) working smoothly
+- ✅ Multiple lists with full CRUD operations
+- ✅ Category collapse/expand reducing clutter
+- ✅ Subtask editing integrated into task edit mode
+- ✅ Clean, progressive UI (date picker on demand)
+- ✅ Consistent drag handles across all levels
+
+**Key Learning:**
+- SortableJS `ghostClass` must be a single class name (not space-separated Tailwind classes)
+- CSS Grid breaks SortableJS multi-column layouts; use Flex layouts instead
+- `className="contents"` removes wrapper from DOM, breaking Sortable element tracking
+- Touch delay prevents scroll conflicts on mobile devices
+
+**Next Steps:**
+- Begin Google Calendar integration planning (Phase 1.1)
+- Mobile testing on actual devices
+- Consider TypeScript migration for type safety
+
+---
+
 ## 🎯 Major Decisions
 
 ### **1. Technology Stack**
@@ -246,38 +311,45 @@ src/
 
 ---
 
-## 🚀 Current Status (November 8, 2025 - React Migration Complete)
+## 🚀 Current Status (November 16, 2025 - User Testing & Enhancements Complete)
 
 ### **What's Working:**
 - ✅ **React Architecture:** Full migration to component-based structure
 - ✅ **Build System:** Vite dev server with hot module replacement
 - ✅ **Styling:** Tailwind CSS v4 for all UI components
+- ✅ **Multiple Todo Lists:** Full CRUD operations for separate lists
 - ✅ Google Sign-In (Firebase Auth)
 - ✅ Todo list (create, edit, delete, complete)
-- ✅ Categories (create, edit, delete, reorder)
-- ✅ Due dates (set, edit, remove, smart overdue highlighting)
+- ✅ Categories (create, edit, delete, reorder with drag handles)
+- ✅ Category collapse/expand with task counts
+- ✅ Due dates (set, edit, remove, smart overdue highlighting, conditional display)
 - ✅ Timestamps (relative time display)
-- ✅ Subtasks (add, delete, complete, Enter key support)
+- ✅ Subtasks (add, delete, complete, **edit inline**, **reorder with drag-and-drop**, Enter key support)
 - ✅ Navigation sidebar (desktop - mobile needs testing)
-- ✅ Firebase real-time sync
+- ✅ Firebase real-time sync with new lists-based data model
 - ✅ Dark mode design (Tailwind dark colors)
 - ✅ Task completion cascades to subtasks
 - ✅ Trash can icons for delete buttons
 - ✅ Completed tasks don't show red dates
+- ✅ **Drag-and-drop:** Categories, tasks, and subtasks all reorderable with visible handles
+
+### **Resolved Issues (November 16):**
+- ✅ ~~Mobile drag-and-drop~~ - Configured with delay/forceFallback
+- ✅ ~~Task reordering~~ - Working with SortableJS and drag handles
+- ✅ ~~Subtask editing~~ - Implemented inline editing in task edit mode
+- ✅ ~~Subtask reordering~~ - Working with SortableJS and drag handles
+- ✅ ~~Category reordering scroll~~ - Working smoothly with Flex layout
+- ✅ ~~CSS Grid breaking drag-and-drop~~ - Switched to Flex column layout
+- ✅ ~~ghostClass InvalidCharacterError~~ - Fixed with single CSS class
 
 ### **Known Issues (Need Testing):**
-- ⚠️ Mobile drag-and-drop - needs verification with SortableJS delay
 - ⚠️ Mobile navigation - needs testing on Android/iOS
-- ⚠️ Task reordering - appears fixed in React version (needs confirmation)
-- ⚠️ Subtask editing - not yet implemented (same as before)
-- ⚠️ Subtask reordering - not yet implemented (same as before)
-- ⚠️ Category reordering scroll - needs testing with new implementation
+- ⚠️ Mobile drag-and-drop - needs testing on actual devices
 
 **Next Session Priority:** 
-1. Test all features on desktop and mobile browsers
-2. Verify November 5 bugs are resolved
-3. Implement remaining features (subtask editing, subtask reordering)
-4. Begin Google Calendar integration planning
+1. Begin Google Calendar integration planning (Phase 1.1)
+2. Test on mobile devices (Android/iOS)
+3. Consider TypeScript migration for enhanced type safety
 
 ---
 

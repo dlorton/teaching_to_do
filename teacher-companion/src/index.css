@@ -10,3 +10,9 @@
 body {
   margin: 0;
 }
+
+/* SortableJS ghost class for dragging */
+.sortable-ghost {
+  opacity: 0.5;
+  background-color: rgba(63, 63, 70, 0.5) !important;
+}
