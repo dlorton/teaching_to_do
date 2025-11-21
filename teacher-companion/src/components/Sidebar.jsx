@@ -27,6 +27,7 @@ export default function Sidebar({ user, active, setActive }) {
                         { key: "supplies", label: "Supplies", icon: "🛒", disabled: true },
                         { key: "resources", label: "Resources", icon: "📚", disabled: true },
                         { key: "lessons", label: "Lessons", icon: "📖", disabled: true },
+                        { key: "settings", label: "Settings", icon: "⚙️", disabled: false },
                     ].map((item) => (
                         <li
                             key={item.key}
@@ -57,7 +58,7 @@ export default function Sidebar({ user, active, setActive }) {
                 </div>
             </nav>
             <button
-                className="fixed left-3 top-3 z-50 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-200 md:hidden"
+                className="fixed right-3 top-3 z-50 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-200 md:hidden"
                 onClick={() => setOpen((v) => !v)}
             >
                 ☰
