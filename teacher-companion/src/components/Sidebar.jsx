@@ -57,7 +57,7 @@ export default function Sidebar({ user, active, setActive }) {
                 </div>
             </nav>
             <button
-                className="fixed left-3 top-3 z-50 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-200 md:hidden"
+                className="fixed right-3 top-3 z-50 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-200 md:hidden"
                 onClick={() => setOpen((v) => !v)}
             >
                 ☰
