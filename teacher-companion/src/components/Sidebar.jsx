@@ -24,9 +24,9 @@ export default function Sidebar({ user, active, setActive }) {
                     {[
                         { key: "todo", label: "Todo List", icon: "📋", disabled: false },
                         { key: "calendar", label: "Calendar", icon: "📅", disabled: true },
-                        { key: "supplies", label: "Supplies", icon: "🛒", disabled: true },
+                        { key: "lessons/planner", label: "Lessons/Planner", icon: "📖", disabled: true },
                         { key: "resources", label: "Resources", icon: "📚", disabled: true },
-                        { key: "lessons", label: "Lessons", icon: "📖", disabled: true },
+                        { key: "supplies", label: "Supplies", icon: "🛒", disabled: true },
                     ].map((item) => (
                         <li
                             key={item.key}
