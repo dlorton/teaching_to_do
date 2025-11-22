@@ -31,7 +31,11 @@ export default function Subtasks({ items, onAdd, onToggle, onDelete, onEdit, onR
             delayOnTouchOnly: true,
             forceFallback: true,
             onEnd: (evt) => {
-                if (evt.oldIndex !== evt.newIndex && onReorder) {
+                if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex && onReorder) {
+                    // Revert the DOM change that Sortable made
+                    evt.item.remove();
+                    el.insertBefore(evt.item, el.children[evt.oldIndex]);
+                    // Let React handle the re-render with the correct data
                     onReorder(evt.oldIndex, evt.newIndex);
                 }
             },
