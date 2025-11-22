@@ -60,10 +60,14 @@
 
 ## Step 4: Update Firestore Security Rules
 
-Add these rules to allow calendar settings storage:
+Add these rules to allow calendar settings and events storage:
 
 ```javascript
 match /users/{userId}/settings/{settingId} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+
+match /users/{userId}/events/{eventId} {
   allow read, write: if request.auth != null && request.auth.uid == userId;
 }
 ```
