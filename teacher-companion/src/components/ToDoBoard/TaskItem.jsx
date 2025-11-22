@@ -57,7 +57,12 @@ export default function TaskItem({ user, listId, catId, task }) {
         const snap = await getDoc(taskRef);
         const cur = snap.data();
         const subtasks = cur.subtasks || [];
-        subtasks.push({ text: txt.trim(), isComplete: false, createdAt: new Date() });
+        subtasks.push({ 
+            id: Date.now() + Math.random(), // Stable unique ID
+            text: txt.trim(), 
+            isComplete: false, 
+            createdAt: new Date() 
+        });
         await updateDoc(taskRef, { subtasks });
     };
 
@@ -166,7 +171,14 @@ export default function TaskItem({ user, listId, catId, task }) {
                                 type="date"
                                 className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none focus:border-teal-400"
                                 value={due ? new Date(due).toISOString().slice(0, 10) : ""}
-                                onChange={(e) => setDue(e.target.value ? new Date(e.target.value) : "")}
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        const [year, month, day] = e.target.value.split('-').map(Number);
+                                        setDue(new Date(year, month - 1, day));
+                                    } else {
+                                        setDue("");
+                                    }
+                                }}
                             />
                             <button className="inline-flex items-center rounded-md bg-teal-400 px-3 py-1 text-sm text-zinc-900" onClick={save}>Save</button>
                             <button className="inline-flex items-center rounded-md border border-zinc-600 px-3 py-1 text-sm text-zinc-300" onClick={() => setEditing(false)}>Cancel</button>
