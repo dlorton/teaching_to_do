@@ -468,6 +468,7 @@ Location: Sidebar (below navigation menu)
 - Button to create task from calendar event
 - Mark calendar events as done when task completed
 - "Completed Tasks" calendar (separate view)
+- **Custom Reminder Time Ranges**: Extend reminder options beyond current 1-day maximum. Users may want custom options like 1 week, 2 days, 3 days, etc. before an event. Current options: 5 min, 15 min, 30 min, 1 hour, 2 hours, 1 day. Consider adding dropdown with preset options (2 days, 3 days, 1 week, 2 weeks) or custom time input for flexibility.
 
 ---
 

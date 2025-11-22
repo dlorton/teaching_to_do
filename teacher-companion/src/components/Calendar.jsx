@@ -2,6 +2,15 @@ import React, { useState, useEffect } from "react";
 import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
+const EVENT_COLORS = [
+    { name: "Teal", value: "teal", bg: "bg-teal-900/30", hover: "hover:bg-teal-900/50", text: "text-teal-300", border: "border-teal-600" },
+    { name: "Blue", value: "blue", bg: "bg-blue-900/30", hover: "hover:bg-blue-900/50", text: "text-blue-300", border: "border-blue-600" },
+    { name: "Purple", value: "purple", bg: "bg-purple-900/30", hover: "hover:bg-purple-900/50", text: "text-purple-300", border: "border-purple-600" },
+    { name: "Pink", value: "pink", bg: "bg-pink-900/30", hover: "hover:bg-pink-900/50", text: "text-pink-300", border: "border-pink-600" },
+    { name: "Orange", value: "orange", bg: "bg-orange-900/30", hover: "hover:bg-orange-900/50", text: "text-orange-300", border: "border-orange-600" },
+    { name: "Green", value: "green", bg: "bg-green-900/30", hover: "hover:bg-green-900/50", text: "text-green-300", border: "border-green-600" },
+];
+
 export default function Calendar({ user }) {
     const [events, setEvents] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -9,6 +18,7 @@ export default function Calendar({ user }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -17,7 +27,8 @@ export default function Calendar({ user }) {
         endTime: "",
         allDay: true,
         reminder: false,
-        reminderMinutes: 15
+        reminderMinutes: 15,
+        color: "teal"
     });
 
     // Load events from Firestore
@@ -69,33 +80,53 @@ export default function Calendar({ user }) {
     const monthNames = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"];
 
-    const previousMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    const previousPeriod = () => {
+        if (view === "month") {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        } else if (view === "week") {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() - 7);
+            setCurrentDate(newDate);
+        } else {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() - 1);
+            setCurrentDate(newDate);
+        }
     };
 
-    const nextMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    const nextPeriod = () => {
+        if (view === "month") {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        } else if (view === "week") {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() + 7);
+            setCurrentDate(newDate);
+        } else {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() + 1);
+            setCurrentDate(newDate);
+        }
     };
 
-    const goToToday = () => {
-        setCurrentDate(new Date());
-    };
-
-    const openAddModal = () => {
+    const openAddModal = (clickedDate = null) => {
+        const dateToUse = clickedDate || new Date();
+        setSelectedDate(clickedDate);
         setFormData({
             title: "",
             description: "",
-            date: new Date().toISOString().split('T')[0],
+            date: dateToUse.toISOString().split('T')[0],
             startTime: "09:00",
             endTime: "10:00",
             allDay: true,
             reminder: false,
-            reminderMinutes: 15
+            reminderMinutes: 15,
+            color: "teal"
         });
         setShowAddModal(true);
     };
 
-    const openEditModal = (event) => {
+    const openEditModal = (event, e) => {
+        if (e) e.stopPropagation();
         setSelectedEvent(event);
         const eventDate = new Date(event.date);
         setFormData({
@@ -106,9 +137,14 @@ export default function Calendar({ user }) {
             endTime: event.endTime || "10:00",
             allDay: event.allDay !== undefined ? event.allDay : true,
             reminder: event.reminder || false,
-            reminderMinutes: event.reminderMinutes || 15
+            reminderMinutes: event.reminderMinutes || 15,
+            color: event.color || "teal"
         });
         setShowEditModal(true);
+    };
+
+    const getColorClasses = (colorValue) => {
+        return EVENT_COLORS.find(c => c.value === colorValue) || EVENT_COLORS[0];
     };
 
     const handleAddEvent = async (e) => {
@@ -116,7 +152,9 @@ export default function Calendar({ user }) {
         if (!formData.title || !formData.date) return;
 
         try {
-            const eventDate = new Date(formData.date);
+            // Create date in local timezone to avoid UTC offset issues
+            const [year, month, day] = formData.date.split('-').map(Number);
+            const eventDate = new Date(year, month - 1, day);
             const eventsRef = collection(db, "users", user.uid, "events");
             await addDoc(eventsRef, {
                 title: formData.title,
@@ -127,9 +165,11 @@ export default function Calendar({ user }) {
                 allDay: formData.allDay,
                 reminder: formData.reminder,
                 reminderMinutes: formData.reminderMinutes,
+                color: formData.color,
                 createdAt: Timestamp.now()
             });
             setShowAddModal(false);
+            setSelectedDate(null);
         } catch (err) {
             console.error("Error adding event:", err);
             alert("Failed to add event");
@@ -141,7 +181,9 @@ export default function Calendar({ user }) {
         if (!formData.title || !formData.date || !selectedEvent) return;
 
         try {
-            const eventDate = new Date(formData.date);
+            // Create date in local timezone to avoid UTC offset issues
+            const [year, month, day] = formData.date.split('-').map(Number);
+            const eventDate = new Date(year, month - 1, day);
             const eventRef = doc(db, "users", user.uid, "events", selectedEvent.id);
             await updateDoc(eventRef, {
                 title: formData.title,
@@ -152,6 +194,7 @@ export default function Calendar({ user }) {
                 allDay: formData.allDay,
                 reminder: formData.reminder,
                 reminderMinutes: formData.reminderMinutes,
+                color: formData.color,
                 updatedAt: Timestamp.now()
             });
             setShowEditModal(false);
@@ -178,6 +221,19 @@ export default function Calendar({ user }) {
 
     const days = getDaysInMonth(currentDate);
 
+    const getViewTitle = () => {
+        if (view === "day") {
+            return `${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
+        } else if (view === "week") {
+            const startOfWeek = new Date(currentDate);
+            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            return `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${currentDate.getFullYear()}`;
+        }
+        return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    };
+
     return (
         <div className="h-full p-6">
             <div className="mx-auto max-w-7xl">
@@ -185,19 +241,40 @@ export default function Calendar({ user }) {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-zinc-100">
-                            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                            {getViewTitle()}
                         </h1>
                         <p className="text-sm text-zinc-400">Manage your schedule and events</p>
                     </div>
                     <div className="flex gap-2">
+                        {/* View Selector */}
+                        <div className="flex rounded-md border border-zinc-700 bg-zinc-800">
+                            <button
+                                onClick={() => setView("day")}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    view === "day" ? "bg-teal-600 text-white" : "text-zinc-300 hover:bg-zinc-700"
+                                } rounded-l-md`}
+                            >
+                                Day
+                            </button>
+                            <button
+                                onClick={() => setView("week")}
+                                className={`border-x border-zinc-700 px-3 py-2 text-sm font-medium ${
+                                    view === "week" ? "bg-teal-600 text-white" : "text-zinc-300 hover:bg-zinc-700"
+                                }`}
+                            >
+                                Week
+                            </button>
+                            <button
+                                onClick={() => setView("month")}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    view === "month" ? "bg-teal-600 text-white" : "text-zinc-300 hover:bg-zinc-700"
+                                } rounded-r-md`}
+                            >
+                                Month
+                            </button>
+                        </div>
                         <button
-                            onClick={goToToday}
-                            className="rounded-md border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700"
-                        >
-                            Today
-                        </button>
-                        <button
-                            onClick={openAddModal}
+                            onClick={() => openAddModal()}
                             className="rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
                         >
                             + New Event
@@ -209,13 +286,13 @@ export default function Calendar({ user }) {
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex gap-2">
                         <button
-                            onClick={previousMonth}
+                            onClick={previousPeriod}
                             className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200 hover:bg-zinc-700"
                         >
                             ←
                         </button>
                         <button
-                            onClick={nextMonth}
+                            onClick={nextPeriod}
                             className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200 hover:bg-zinc-700"
                         >
                             →
@@ -226,56 +303,102 @@ export default function Calendar({ user }) {
                     </div>
                 </div>
 
-                {/* Calendar Grid */}
-                <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
-                    {/* Weekday headers */}
-                    <div className="grid grid-cols-7 border-b border-zinc-800 bg-zinc-800/50">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="p-2 text-center text-sm font-medium text-zinc-400">
-                                {day}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Calendar days */}
-                    <div className="grid grid-cols-7">
-                        {days.map((day, index) => {
-                            const dayEvents = day ? getEventsForDate(day) : [];
-                            const isToday = day && day.toDateString() === new Date().toDateString();
-
-                            return (
-                                <div
-                                    key={index}
-                                    className={`min-h-[100px] border-b border-r border-zinc-800 p-2 ${
-                                        !day ? 'bg-zinc-900/50' : 'bg-zinc-900 hover:bg-zinc-800/50'
-                                    }`}
-                                >
-                                    {day && (
-                                        <>
-                                            <div className={`mb-1 text-sm font-medium ${
-                                                isToday ? 'flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white' : 'text-zinc-300'
-                                            }`}>
-                                                {day.getDate()}
-                                            </div>
-                                            <div className="space-y-1">
-                                                {dayEvents.map(event => (
-                                                    <div
-                                                        key={event.id}
-                                                        onClick={() => openEditModal(event)}
-                                                        className="cursor-pointer truncate rounded bg-teal-900/30 px-2 py-1 text-xs text-teal-300 hover:bg-teal-900/50"
-                                                        title={event.title}
-                                                    >
-                                                        {event.allDay ? "" : "🕐 "}{event.title}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
+                {/* Calendar Grid - Month View */}
+                {view === "month" && (
+                    <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+                        {/* Weekday headers */}
+                        <div className="grid grid-cols-7 border-b border-zinc-800 bg-zinc-800/50">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                <div key={day} className="p-2 text-center text-sm font-medium text-zinc-400">
+                                    {day}
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
+
+                        {/* Calendar days */}
+                        <div className="grid grid-cols-7">
+                            {days.map((day, index) => {
+                                const dayEvents = day ? getEventsForDate(day) : [];
+                                const isToday = day && day.toDateString() === new Date().toDateString();
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => day && openAddModal(day)}
+                                        className={`min-h-[100px] cursor-pointer border-b border-r border-zinc-800 p-2 ${
+                                            !day ? 'bg-zinc-900/50' : 'bg-zinc-900 hover:bg-zinc-800/50'
+                                        }`}
+                                    >
+                                        {day && (
+                                            <>
+                                                <div className={`mb-1 text-sm font-medium ${
+                                                    isToday ? 'flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white' : 'text-zinc-300'
+                                                }`}>
+                                                    {day.getDate()}
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {dayEvents.map(event => {
+                                                        const colorClasses = getColorClasses(event.color);
+                                                        return (
+                                                            <div
+                                                                key={event.id}
+                                                                onClick={(e) => openEditModal(event, e)}
+                                                                className={`cursor-pointer truncate rounded px-2 py-1 text-xs ${colorClasses.bg} ${colorClasses.hover} ${colorClasses.text}`}
+                                                                title={event.title}
+                                                            >
+                                                                {event.allDay ? "" : "🕐 "}{event.title}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* Week View */}
+                {view === "week" && (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-center">
+                        <p className="text-zinc-400">Week view coming soon...</p>
+                    </div>
+                )}
+
+                {/* Day View */}
+                {view === "day" && (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
+                        <div className="space-y-2">
+                            {getEventsForDate(currentDate).map(event => {
+                                const colorClasses = getColorClasses(event.color);
+                                return (
+                                    <div
+                                        key={event.id}
+                                        onClick={() => openEditModal(event)}
+                                        className={`cursor-pointer rounded-lg border-l-4 p-4 ${colorClasses.border} ${colorClasses.bg} ${colorClasses.hover}`}
+                                    >
+                                        <div className={`font-medium ${colorClasses.text}`}>{event.title}</div>
+                                        {event.description && (
+                                            <div className="mt-1 text-sm text-zinc-400">{event.description}</div>
+                                        )}
+                                        {!event.allDay && (
+                                            <div className="mt-1 text-xs text-zinc-500">
+                                                🕐 {event.startTime} - {event.endTime}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {getEventsForDate(currentDate).length === 0 && (
+                                <div className="py-8 text-center text-zinc-400">
+                                    No events for this day. Click "+ New Event" to add one.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Add Event Modal */}
@@ -312,6 +435,22 @@ export default function Calendar({ user }) {
                                     className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100 focus:border-teal-500 focus:outline-none"
                                     required
                                 />
+                            </div>
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-zinc-300">Color</label>
+                                <div className="flex gap-2">
+                                    {EVENT_COLORS.map((color) => (
+                                        <button
+                                            key={color.value}
+                                            type="button"
+                                            onClick={() => setFormData({...formData, color: color.value})}
+                                            className={`h-8 w-8 rounded-full ${color.bg} ${
+                                                formData.color === color.value ? `ring-2 ring-offset-2 ${color.border} ring-offset-zinc-900` : ''
+                                            }`}
+                                            title={color.name}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                             <div>
                                 <label className="flex items-center gap-2">
@@ -427,6 +566,22 @@ export default function Calendar({ user }) {
                                     className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100 focus:border-teal-500 focus:outline-none"
                                     required
                                 />
+                            </div>
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-zinc-300">Color</label>
+                                <div className="flex gap-2">
+                                    {EVENT_COLORS.map((color) => (
+                                        <button
+                                            key={color.value}
+                                            type="button"
+                                            onClick={() => setFormData({...formData, color: color.value})}
+                                            className={`h-8 w-8 rounded-full ${color.bg} ${
+                                                formData.color === color.value ? `ring-2 ring-offset-2 ${color.border} ring-offset-zinc-900` : ''
+                                            }`}
+                                            title={color.name}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                             <div>
                                 <label className="flex items-center gap-2">
