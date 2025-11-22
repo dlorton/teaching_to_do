@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { db } from "../../lib/firebase";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import Subtasks from "./Subtasks";
 
 
@@ -95,6 +95,36 @@ export default function TaskItem({ user, listId, catId, task }) {
         await updateDoc(taskRef, { subtasks });
     };
 
+    const addToCalendar = async () => {
+        if (!task.dueDate) {
+            alert("This task doesn't have a due date. Add one first!");
+            return;
+        }
+
+        try {
+            const dueDate = task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate);
+            const eventsRef = collection(db, "users", user.uid, "events");
+            
+            await addDoc(eventsRef, {
+                title: task.text,
+                description: `Task from Todo List`,
+                date: Timestamp.fromDate(dueDate),
+                startTime: null,
+                endTime: null,
+                allDay: true,
+                reminder: true,
+                reminderMinutes: 60, // 1 hour before
+                color: "teal",
+                createdAt: Timestamp.now()
+            });
+            
+            alert("✅ Task added to calendar!");
+        } catch (err) {
+            console.error("Error adding to calendar:", err);
+            alert("Failed to add to calendar");
+        }
+    };
+
 
     const createdAt = task.createdAt?.toDate ? task.createdAt.toDate() : task.createdAt;
     const human = createdAt
@@ -165,6 +195,15 @@ export default function TaskItem({ user, listId, catId, task }) {
                     />
                 </div>
                 <div className="flex shrink-0 gap-1 self-start">
+                    {!editing && task.dueDate && (
+                        <button 
+                            className="inline-flex items-center rounded-md border border-teal-600 bg-teal-600/10 px-2 py-1 text-sm text-teal-400 hover:bg-teal-600/20" 
+                            onClick={addToCalendar}
+                            title="Add this task to your calendar"
+                        >
+                            📅
+                        </button>
+                    )}
                     {!editing && (
                         <button className="inline-flex items-center rounded-md border border-zinc-600 px-2 py-1 text-sm text-zinc-300 hover:bg-zinc-800" onClick={() => setEditing(true)}>Edit</button>
                     )}

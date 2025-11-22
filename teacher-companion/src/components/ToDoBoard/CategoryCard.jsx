@@ -21,7 +21,7 @@ export default function CategoryCard({ user, listId, cat }) {
     const [name, setName] = useState(cat.name);
     const [editing, setEditing] = useState(false);
     const [tasks, setTasks] = useState([]);
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
 
 
     const tasksRef = useMemo(
@@ -121,7 +121,7 @@ export default function CategoryCard({ user, listId, cat }) {
                             ⋮⋮
                         </span>
                         <button
-                            className="text-zinc-400 hover:text-teal-300"
+                            className={collapsed ? "text-teal-400 hover:text-teal-300" : "text-teal-400 hover:text-teal-300"}
                             onClick={() => setCollapsed((v) => !v)}
                             title={collapsed ? "Expand tasks" : "Collapse tasks"}
                         >
