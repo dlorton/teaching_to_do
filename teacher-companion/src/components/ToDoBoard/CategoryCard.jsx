@@ -122,10 +122,11 @@ export default function CategoryCard({ user, listId, cat }) {
                         </span>
                         <button
                             className="text-teal-400 hover:text-teal-300"
+                            style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
                             onClick={() => setCollapsed((v) => !v)}
                             title={collapsed ? "Expand tasks" : "Collapse tasks"}
                         >
-                            {collapsed ? "▶" : "▼"}
+                            <span style={{ fontVariantEmoji: 'text' }}>{collapsed ? "▶" : "▼"}</span>
                         </button>
                         <h3 className="text-lg font-semibold text-zinc-100">
                             {cat.name} {tasks.length > 0 && <span className="text-sm text-zinc-400">({tasks.length})</span>}
