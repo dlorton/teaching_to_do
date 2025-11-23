@@ -19,7 +19,7 @@ const todayClass = (date) => {
 export default function TaskItem({ user, listId, catId, task }) {
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(task.text);
-    const [due, setDue] = useState(task.dueDate ? new Date(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate) : null);
+    const [due, setDue] = useState(task.dueDate ? (task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate) : null);
 
 
     useEffect(() => setText(task.text), [task.text]);
@@ -188,8 +188,8 @@ export default function TaskItem({ user, listId, catId, task }) {
                             <div className="text-zinc-100">{task.text}</div>
                             {human && <div className="text-xs italic text-zinc-400">{human}</div>}
                             {task.dueDate && (
-                                <div className={cls("text-xs", todayClass(task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate)))}>
-                                    Due: {fmtDate(task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate))}
+                                <div className={cls("text-xs", todayClass(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate))}>
+                                    Due: {fmtDate(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate)}
                                 </div>
                             )}
                         </>
