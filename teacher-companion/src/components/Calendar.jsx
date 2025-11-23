@@ -69,6 +69,25 @@ export default function Calendar({ user }) {
         return days;
     };
 
+    const getDaysInWeek = (date) => {
+        const days = [];
+        const currentDay = new Date(date);
+        const dayOfWeek = currentDay.getDay(); // 0 = Sunday, 6 = Saturday
+        
+        // Go back to Sunday of this week
+        const sunday = new Date(currentDay);
+        sunday.setDate(currentDay.getDate() - dayOfWeek);
+        
+        // Generate 7 days (Sunday through Saturday)
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(sunday);
+            day.setDate(sunday.getDate() + i);
+            days.push(day);
+        }
+        
+        return days;
+    };
+
     const getEventsForDate = (date) => {
         if (!date) return [];
         return events.filter(event => {
@@ -324,7 +343,12 @@ export default function Calendar({ user }) {
                                 return (
                                     <div
                                         key={index}
-                                        onClick={() => day && openAddModal(day)}
+                                        onClick={() => {
+                                            if (day) {
+                                                setCurrentDate(day);
+                                                setView("day");
+                                            }
+                                        }}
                                         className={`min-h-[100px] cursor-pointer border-b border-r border-zinc-800 p-2 ${
                                             !day ? 'bg-zinc-900/50' : 'bg-zinc-900 hover:bg-zinc-800/50'
                                         }`}
@@ -362,8 +386,46 @@ export default function Calendar({ user }) {
 
                 {/* Week View */}
                 {view === "week" && (
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-center">
-                        <p className="text-zinc-400">Week view coming soon...</p>
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900">
+                        <div className="grid grid-cols-7">
+                            {getDaysInWeek(currentDate).map((day, index) => {
+                                const dayEvents = getEventsForDate(day);
+                                const isToday = day.toDateString() === new Date().toDateString();
+                                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                
+                                return (
+                                    <div key={index} className="min-h-[400px] border-r border-zinc-800 last:border-r-0">
+                                        <div className={`border-b border-zinc-800 p-3 text-center ${
+                                            isToday ? 'bg-teal-900/20' : 'bg-zinc-800/50'
+                                        }`}>
+                                            <div className="text-xs font-medium text-zinc-400">{dayNames[index]}</div>
+                                            <div className={`mt-1 text-lg font-bold ${
+                                                isToday ? 'text-teal-400' : 'text-zinc-200'
+                                            }`}>
+                                                {day.getDate()}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1 p-2">
+                                            {dayEvents.map(event => {
+                                                const colorClasses = getColorClasses(event.color);
+                                                return (
+                                                    <div
+                                                        key={event.id}
+                                                        onClick={() => openEditModal(event)}
+                                                        className={`cursor-pointer rounded px-2 py-1 text-xs ${colorClasses.bg} ${colorClasses.hover} ${colorClasses.text}`}
+                                                    >
+                                                        <div className="truncate font-medium">{event.title}</div>
+                                                        {!event.allDay && (
+                                                            <div className="mt-0.5 text-[10px] opacity-80">{event.startTime}</div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
