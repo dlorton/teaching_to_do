@@ -31,7 +31,11 @@ export default function Subtasks({ items, onAdd, onToggle, onDelete, onEdit, onR
             delayOnTouchOnly: true,
             forceFallback: true,
             onEnd: (evt) => {
-                if (evt.oldIndex !== evt.newIndex && onReorder) {
+                if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex && onReorder) {
+                    // Revert the DOM change that Sortable made
+                    evt.item.remove();
+                    el.insertBefore(evt.item, el.children[evt.oldIndex]);
+                    // Let React handle the re-render with the correct data
                     onReorder(evt.oldIndex, evt.newIndex);
                 }
             },
@@ -65,7 +69,7 @@ export default function Subtasks({ items, onAdd, onToggle, onDelete, onEdit, onR
                 <>
                     <ul ref={listRef} className="ml-6 space-y-1">
                         {items.map((s, i) => (
-                            <li key={i} className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm">
+                            <li key={s.id || i} className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-sm">
                                 {items.length > 1 && (
                                     <span className="drag-handle cursor-move pr-1 text-zinc-500 hover:text-zinc-300" title="Drag to reorder">
                                         ⋮⋮

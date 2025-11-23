@@ -21,7 +21,7 @@ export default function CategoryCard({ user, listId, cat }) {
     const [name, setName] = useState(cat.name);
     const [editing, setEditing] = useState(false);
     const [tasks, setTasks] = useState([]);
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
 
 
     const tasksRef = useMemo(
@@ -87,12 +87,20 @@ export default function CategoryCard({ user, listId, cat }) {
     const addTask = async (text, dueDate) => {
         if (!text?.trim()) return;
         const count = (await getDocs(tasksRef)).size;
+        
+        // Parse date in local timezone to avoid UTC offset
+        let parsedDate = null;
+        if (dueDate) {
+            const [year, month, day] = dueDate.split('-').map(Number);
+            parsedDate = new Date(year, month - 1, day);
+        }
+        
         await addDoc(tasksRef, {
             text: text.trim(),
             order: count,
             isComplete: false,
             createdAt: serverTimestamp(),
-            dueDate: dueDate ? new Date(dueDate) : null,
+            dueDate: parsedDate,
             subtasks: [],
         });
     };
@@ -121,11 +129,12 @@ export default function CategoryCard({ user, listId, cat }) {
                             ⋮⋮
                         </span>
                         <button
-                            className="text-zinc-400 hover:text-teal-300"
+                            className="text-teal-400 hover:text-teal-300"
+                            style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
                             onClick={() => setCollapsed((v) => !v)}
                             title={collapsed ? "Expand tasks" : "Collapse tasks"}
                         >
-                            {collapsed ? "▶" : "▼"}
+                            <span style={{ fontVariantEmoji: 'text' }}>{collapsed ? "▶" : "▼"}</span>
                         </button>
                         <h3 className="text-lg font-semibold text-zinc-100">
                             {cat.name} {tasks.length > 0 && <span className="text-sm text-zinc-400">({tasks.length})</span>}

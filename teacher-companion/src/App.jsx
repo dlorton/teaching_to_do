@@ -3,6 +3,8 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from "firebas
 import { auth } from "./lib/firebase";
 import Sidebar from "./components/Sidebar";
 import TodoBoard from "./components/ToDoBoard/ListName";
+import Calendar from "./components/Calendar";
+import Settings from "./components/Settings";
 
 
 export default function App() {
@@ -39,11 +41,13 @@ export default function App() {
       <Sidebar user={user} active={active} setActive={setActive} />
       <main className="min-h-screen w-full md:pl-64">
         {active === "todo" && <TodoBoard user={user} />}
-        {active !== "todo" && (
+        {active === "calendar" && <Calendar user={user} />}
+        {active === "settings" && <Settings user={user} />}
+        {active !== "todo" && active !== "calendar" && active !== "settings" && (
           <div className="p-6">
             <div className="mx-auto max-w-5xl rounded-xl border border-zinc-800 bg-zinc-900 p-6">
               <h2 className="mb-2 text-xl font-semibold">Coming soon</h2>
-              <p className="text-zinc-400">This section isn’t ready yet.</p>
+              <p className="text-zinc-400">This section isn't ready yet.</p>
               <button className="mt-4 rounded-md bg-zinc-700 px-3 py-1 text-sm" onClick={() => setActive("todo")}>
                 ← Back to Todo
               </button>

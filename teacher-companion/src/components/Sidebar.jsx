@@ -23,10 +23,11 @@ export default function Sidebar({ user, active, setActive }) {
                 <ul className="flex-1 overflow-y-auto">
                     {[
                         { key: "todo", label: "Todo List", icon: "📋", disabled: false },
-                        { key: "calendar", label: "Calendar", icon: "📅", disabled: true },
-                        { key: "lessons/planner", label: "Lessons/Planner", icon: "📖", disabled: true },
-                        { key: "resources", label: "Resources", icon: "📚", disabled: true },
+                        { key: "calendar", label: "Calendar", icon: "📅", disabled: false },
+                        { key: "lessons", label: "Lessons/Planner", icon: "📖", disabled: true },
                         { key: "supplies", label: "Supplies", icon: "🛒", disabled: true },
+                        { key: "resources", label: "Resources", icon: "📚", disabled: true },
+                        { key: "settings", label: "Settings", icon: "⚙️", disabled: false },
                     ].map((item) => (
                         <li
                             key={item.key}

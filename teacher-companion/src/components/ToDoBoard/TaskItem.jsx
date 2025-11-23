@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { db } from "../../lib/firebase";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import Subtasks from "./Subtasks";
 
 
@@ -19,7 +19,7 @@ const todayClass = (date) => {
 export default function TaskItem({ user, listId, catId, task }) {
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(task.text);
-    const [due, setDue] = useState(task.dueDate ? new Date(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate) : null);
+    const [due, setDue] = useState(task.dueDate ? (task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate) : null);
 
 
     useEffect(() => setText(task.text), [task.text]);
@@ -57,7 +57,12 @@ export default function TaskItem({ user, listId, catId, task }) {
         const snap = await getDoc(taskRef);
         const cur = snap.data();
         const subtasks = cur.subtasks || [];
-        subtasks.push({ text: txt.trim(), isComplete: false, createdAt: new Date() });
+        subtasks.push({ 
+            id: Date.now() + Math.random(), // Stable unique ID
+            text: txt.trim(), 
+            isComplete: false, 
+            createdAt: new Date() 
+        });
         await updateDoc(taskRef, { subtasks });
     };
 
@@ -93,6 +98,36 @@ export default function TaskItem({ user, listId, catId, task }) {
         const [movedItem] = subtasks.splice(oldIdx, 1);
         subtasks.splice(newIdx, 0, movedItem);
         await updateDoc(taskRef, { subtasks });
+    };
+
+    const addToCalendar = async () => {
+        if (!task.dueDate) {
+            alert("This task doesn't have a due date. Add one first!");
+            return;
+        }
+
+        try {
+            const dueDate = task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate);
+            const eventsRef = collection(db, "users", user.uid, "events");
+            
+            await addDoc(eventsRef, {
+                title: task.text,
+                description: `Task from Todo List`,
+                date: Timestamp.fromDate(dueDate),
+                startTime: null,
+                endTime: null,
+                allDay: true,
+                reminder: true,
+                reminderMinutes: 60, // 1 hour before
+                color: "teal",
+                createdAt: Timestamp.now()
+            });
+            
+            alert("✅ Task added to calendar!");
+        } catch (err) {
+            console.error("Error adding to calendar:", err);
+            alert("Failed to add to calendar");
+        }
     };
 
 
@@ -136,7 +171,14 @@ export default function TaskItem({ user, listId, catId, task }) {
                                 type="date"
                                 className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none focus:border-teal-400"
                                 value={due ? new Date(due).toISOString().slice(0, 10) : ""}
-                                onChange={(e) => setDue(e.target.value ? new Date(e.target.value) : "")}
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        const [year, month, day] = e.target.value.split('-').map(Number);
+                                        setDue(new Date(year, month - 1, day));
+                                    } else {
+                                        setDue("");
+                                    }
+                                }}
                             />
                             <button className="inline-flex items-center rounded-md bg-teal-400 px-3 py-1 text-sm text-zinc-900" onClick={save}>Save</button>
                             <button className="inline-flex items-center rounded-md border border-zinc-600 px-3 py-1 text-sm text-zinc-300" onClick={() => setEditing(false)}>Cancel</button>
@@ -146,8 +188,8 @@ export default function TaskItem({ user, listId, catId, task }) {
                             <div className="text-zinc-100">{task.text}</div>
                             {human && <div className="text-xs italic text-zinc-400">{human}</div>}
                             {task.dueDate && (
-                                <div className={cls("text-xs", todayClass(task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate)))}>
-                                    Due: {fmtDate(task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate))}
+                                <div className={cls("text-xs", todayClass(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate))}>
+                                    Due: {fmtDate(task.dueDate.toDate ? task.dueDate.toDate() : task.dueDate)}
                                 </div>
                             )}
                         </>
@@ -165,6 +207,15 @@ export default function TaskItem({ user, listId, catId, task }) {
                     />
                 </div>
                 <div className="flex shrink-0 gap-1 self-start">
+                    {!editing && task.dueDate && (
+                        <button 
+                            className="inline-flex items-center rounded-md border border-teal-600 bg-teal-600/10 px-2 py-1 text-sm text-teal-400 hover:bg-teal-600/20" 
+                            onClick={addToCalendar}
+                            title="Add this task to your calendar"
+                        >
+                            📅
+                        </button>
+                    )}
                     {!editing && (
                         <button className="inline-flex items-center rounded-md border border-zinc-600 px-2 py-1 text-sm text-zinc-300 hover:bg-zinc-800" onClick={() => setEditing(true)}>Edit</button>
                     )}
