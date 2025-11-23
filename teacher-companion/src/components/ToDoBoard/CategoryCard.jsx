@@ -121,7 +121,7 @@ export default function CategoryCard({ user, listId, cat }) {
                             ⋮⋮
                         </span>
                         <button
-                            className={collapsed ? "text-teal-400 hover:text-teal-300" : "text-teal-400 hover:text-teal-300"}
+                            className="text-teal-400 hover:text-teal-300"
                             onClick={() => setCollapsed((v) => !v)}
                             title={collapsed ? "Expand tasks" : "Collapse tasks"}
                         >
