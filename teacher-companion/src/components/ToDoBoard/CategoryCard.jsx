@@ -87,12 +87,20 @@ export default function CategoryCard({ user, listId, cat }) {
     const addTask = async (text, dueDate) => {
         if (!text?.trim()) return;
         const count = (await getDocs(tasksRef)).size;
+        
+        // Parse date in local timezone to avoid UTC offset
+        let parsedDate = null;
+        if (dueDate) {
+            const [year, month, day] = dueDate.split('-').map(Number);
+            parsedDate = new Date(year, month - 1, day);
+        }
+        
         await addDoc(tasksRef, {
             text: text.trim(),
             order: count,
             isComplete: false,
             createdAt: serverTimestamp(),
-            dueDate: dueDate ? new Date(dueDate) : null,
+            dueDate: parsedDate,
             subtasks: [],
         });
     };
